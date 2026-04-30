@@ -10,7 +10,7 @@ const s3Client = new S3Client({
 });
 
 // export const S3_BASE_URL = `https://${BUCKET}.s3.${REGION}.amazonaws.com/`;
-export const S3_BASE_URL = `https://cozzy.corner.s3.ap-south-1.amazonaws.com/`;
+export const S3_BASE_URL = `http://cozzy.corner.s3.ap-south-1.amazonaws.com/`;
 
 export function getImageUrl(path: string | null | undefined): string {
     if (!path) return "";

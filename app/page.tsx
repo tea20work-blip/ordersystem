@@ -5,7 +5,6 @@ import { CartSnak } from "@/components/cartSnak";
 
 export default async function Home() {
   const dishes = await getDishes("");
-
   return (
     <div className="min-h-screen max-w-xl mx-auto flex flex-col">
       <Header />

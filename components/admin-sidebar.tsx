@@ -11,7 +11,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, List, Utensils, Armchair } from "lucide-react";
+import { LayoutDashboard, List, Utensils, Armchair, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -35,6 +35,11 @@ const items = [
         title: "Tables",
         url: "/admin/tables",
         icon: Armchair,
+    },
+    {
+        title: "Orders",
+        url: "/admin/orders",
+        icon: ClipboardList,
     },
 ];
 

@@ -7,6 +7,8 @@ import { getImageUrl } from "@/lib/s3";
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DialogUserDetails } from "@/components/DialogUserDetails";
+import { toast } from "sonner";
 
 export default function CartPage() {
     const [mounted, setMounted] = useState(false);
@@ -52,7 +54,7 @@ export default function CartPage() {
                                 </div>
                             </div>
                         </div>
-                        <OrderSummary totalAmount={totalAmount} />
+                        <OrderSummary totalAmount={totalAmount} cartItems={cartItems} clearCart={clearCart} />
 
                     </div>
                 )}
@@ -62,9 +64,36 @@ export default function CartPage() {
 }
 
 
-function OrderSummary({ totalAmount }: { totalAmount: number }) {
+function OrderSummary({ totalAmount, cartItems, clearCart }: { totalAmount: number, cartItems: any[], clearCart: () => void }) {
     const GSTAmount = Number(totalAmount * 0.18).toFixed();
     const totalAmountWithGST = Number(totalAmount) + Number(GSTAmount);
+    const [open, setOpen] = useState(false);
+
+    const handleSubmit = async (data: any) => {
+        try {
+            const res = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...data,
+                    cartItems,
+                    totalPricing: totalAmountWithGST
+                })
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success("Order placed successfully!");
+                clearCart();
+                setOpen(false);
+            } else {
+                toast.error("Failed to place order: " + result.error);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("An error occurred while placing order.");
+        }
+    };
+
     return (
         <div className="md:col-span-1">
             <div className="bg-card border rounded-2xl shadow-sm p-6 sticky top-24">
@@ -85,11 +114,17 @@ function OrderSummary({ totalAmount }: { totalAmount: number }) {
                     </div>
                 </div>
 
-                <Button className="w-full text-lg h-12 rounded-xl group" size="lg">
+                <Button onClick={() => setOpen(true)} className="w-full text-lg h-12 rounded-xl group" size="lg">
                     Place Order
                     <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
             </div>
+            <DialogUserDetails
+                open={open}
+                onOpenChange={setOpen}
+                data={{ tableName: "Table 5" }}
+                onSubmit={handleSubmit}
+            />
         </div>
     )
 }

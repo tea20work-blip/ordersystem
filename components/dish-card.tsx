@@ -44,7 +44,7 @@ export function DishCard({ dish }: { dish: Dish }) {
             </div>
 
 
-            <div className="relative w-32 aspect-square overflow-hidden">
+            <div className="relative w-32 aspect-square shrink-0 overflow-hidden">
                 {dish.imageUrl ? (
                     <img
                         src={getImageUrl(dish.imageUrl)}
