@@ -8,6 +8,27 @@
       "when": 1772814574373,
       "tag": "0000_worried_squadron_supreme",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777704340181,
+      "tag": "0001_brief_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777724554270,
+      "tag": "0002_reflective_epoch",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777724677370,
+      "tag": "0003_abnormal_sinister_six",
+      "breakpoints": true
     }
   ]
 }

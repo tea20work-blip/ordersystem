@@ -49,7 +49,7 @@ export default function CartPage() {
 
                                 <div className="divide-y">
                                     {cartItems.map((item) => (
-                                        <CartItem item={item} updateQuantity={updateQuantity} removeItem={removeItem} />
+                                        <CartItem key={item.cartItemId} item={item} updateQuantity={updateQuantity} removeItem={removeItem} />
                                     ))}
                                 </div>
                             </div>
@@ -147,8 +147,9 @@ function EmptyCart() {
 }
 
 function CartItem({ item, updateQuantity, removeItem }: any) {
+    const optionsPrice = item.selectedOptions?.reduce((sum: number, opt: any) => sum + opt.price, 0) || 0;
     return (
-        <div key={item.dish.id} className="p-4 sm:p-6 flex flex-row gap-4 sm:gap-6 justify-between sm:items-center transition-colors hover:bg-muted/10">
+        <div key={item.cartItemId} className="p-4 sm:p-6 flex flex-row gap-4 sm:gap-6 justify-between sm:items-center transition-colors hover:bg-muted/10">
             {/* <div className="w-24 h-24 rounded-lg bg-muted shrink-0 overflow-hidden">
                 {item.dish.imageUrl ? (
                     <img
@@ -165,7 +166,11 @@ function CartItem({ item, updateQuantity, removeItem }: any) {
 
             <div className=" w-full">
                 <h4 className="font-semibold text-lg truncate">{item.dish.name}</h4>
-                {/* <p className="font-medium text-primary mt-1">Rs. {item.dish.price}</p> */}
+                {item.selectedOptions && item.selectedOptions.length > 0 && (
+                    <div className="text-sm text-muted-foreground mt-1">
+                        + {item.selectedOptions.map((o: any) => o.name).join(', ')}
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-col items-center gap-4 mt-2 sm:mt-0 justify-between sm:justify-end w-fit">
@@ -174,7 +179,7 @@ function CartItem({ item, updateQuantity, removeItem }: any) {
                         variant="ghost"
                         size="icon"
                         className="h-9 w-9 rounded-none"
-                        onClick={() => updateQuantity(item.dish.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
                     >
                         <Minus className="h-3 w-3" />
                     </Button>
@@ -185,14 +190,14 @@ function CartItem({ item, updateQuantity, removeItem }: any) {
                         variant="ghost"
                         size="icon"
                         className="h-9 w-9 rounded-none"
-                        onClick={() => updateQuantity(item.dish.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                     >
                         <Plus className="h-3 w-3" />
                     </Button>
                 </div>
 
                 <div className="text-right sm:w-24 font-bold">
-                    Rs. {item.dish.price * item.quantity}
+                    Rs. {(item.dish.price + optionsPrice) * item.quantity}
                 </div>
 
                 {/* <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeItem(item.dish.id)}>

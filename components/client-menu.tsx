@@ -15,18 +15,19 @@ type Dish = {
     updatedAt: Date | null;
 };
 
-export function ClientMenu({ initialDishes }: { initialDishes: Dish[] }) {
-    const [searchQuery, setSearchQuery] = useState("");
+export function ClientMenu({ initialDishes }: { initialDishes: any }) {
+    // const [searchQuery, setSearchQuery] = useState("");
 
-    const filteredDishes = initialDishes.filter(dish =>
-        dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (dish.description?.toLowerCase() || "").includes(searchQuery.toLowerCase())
-    );
+    // const filteredDishes = initialDishes.filter(dish =>
+    //     dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    //     (dish.description?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+    // );
+    const filteredDishes = initialDishes;
 
     return (
         <>
             <div className="px-4 sticky w-full bg-white z-999 border-b py-4 top-0">
-                <InputGroup className="max-w-none w-full">
+                {/* <InputGroup className="max-w-none w-full">
                     <InputGroupInput
                         placeholder="Search dishes..."
                         value={searchQuery}
@@ -35,7 +36,7 @@ export function ClientMenu({ initialDishes }: { initialDishes: Dish[] }) {
                     <InputGroupAddon>
                         <Search className="h-4 w-4 text-muted-foreground" />
                     </InputGroupAddon>
-                </InputGroup>
+                </InputGroup> */}
             </div>
 
             <main className="flex-1 container mx-auto md:px-4 py-8 max-w-7xl">
@@ -51,8 +52,14 @@ export function ClientMenu({ initialDishes }: { initialDishes: Dish[] }) {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1">
-                        {filteredDishes.map((dish) => (
-                            <DishCard key={dish.id} dish={dish} />
+                        {filteredDishes.map((category: any) => (
+                            <div>
+                                <h1 className=" bg-gray-200 text-gray-800 py-2 px-4 font-semibold text-sm">{category.name}</h1>
+
+                                {category.dishes.map((dish: any) => (
+                                    <DishCard key={dish.id} dish={dish} />
+                                ))}
+                            </div>
                         ))}
                     </div>
                 )}

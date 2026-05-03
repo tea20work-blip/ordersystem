@@ -1,94 +1,229 @@
 "use client";
 
-import { Dish, useCartStore } from "@/store/cart";
+import { useState } from "react";
+import { Dish, SelectedOption, useCartStore } from "@/store/cart";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
 import { getImageUrl } from "@/lib/s3";
+import {
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+} from "@/components/ui/drawer";
 
-export function DishCard({ dish }: { dish: Dish }) {
+export function DishCard({ dish }: { dish: any }) {
     const cartItems = useCartStore((state) => state.items);
     const addItem = useCartStore((state) => state.addItem);
     const updateQuantity = useCartStore((state) => state.updateQuantity);
     const removeItem = useCartStore((state) => state.removeItem);
 
-    const cartItem = cartItems.find((item) => item.dish.id === dish.id);
-    const quantity = cartItem?.quantity || 0;
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
 
-    const handleAdd = () => addItem(dish);
+    const dishCartItems = cartItems.filter((item) => item.dish.id === dish.id);
+    const quantity = dishCartItems.reduce((sum, item) => sum + item.quantity, 0);
+    const hasOptions = Array.isArray(dish.dishOptions) && dish.dishOptions.length > 0;
 
-    const handleIncrement = () => updateQuantity(dish.id, quantity + 1);
-
-    const handleDecrement = () => {
-        if (quantity === 1) {
-            removeItem(dish.id);
+    const handleAdd = () => {
+        if (hasOptions) {
+            setSelectedOptions([]);
+            setIsDrawerOpen(true);
         } else {
-            updateQuantity(dish.id, quantity - 1);
+            addItem(dish);
         }
     };
 
+    const handleIncrement = () => {
+        if (hasOptions) {
+            setSelectedOptions([]);
+            setIsDrawerOpen(true);
+        } else {
+            const defaultItem = dishCartItems.find(item => item.cartItemId === String(dish.id));
+            if (defaultItem) {
+                updateQuantity(defaultItem.cartItemId, defaultItem.quantity + 1);
+            } else {
+                addItem(dish);
+            }
+        }
+    };
+
+    const handleDecrement = () => {
+        if (hasOptions) {
+            const lastItem = dishCartItems[dishCartItems.length - 1];
+            if (lastItem) {
+                updateQuantity(lastItem.cartItemId, lastItem.quantity - 1);
+            }
+        } else {
+            const defaultItem = dishCartItems.find(item => item.cartItemId === String(dish.id));
+            if (defaultItem) {
+                updateQuantity(defaultItem.cartItemId, defaultItem.quantity - 1);
+            }
+        }
+    };
+
+    const confirmAddOptions = () => {
+        addItem(dish, selectedOptions);
+        setIsDrawerOpen(false);
+    };
+
+    const toggleOption = (option: any) => {
+        setSelectedOptions(prev => {
+            const exists = prev.find(o => o.id === option.id);
+            if (exists) return prev.filter(o => o.id !== option.id);
+            return [...prev, option];
+        });
+    };
+
     return (
-        <div className=" border-b border-dashed py-8 w-full bg-card  shadow-sm overflow-hidden flex group hover:shadow-md px-4 transition-all duration-300">
-
-
-            <div className=" flex flex-col grow">
-                <h3 className="font-semibold text-lg leading-tight tracking-tight mb-1">{dish.name}</h3>
-                {dish.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4 grow">
-                        {dish.description}
-                    </p>
-                )}
-
-                <div className="flex items-center justify-between mt-auto pt-4">
-                    <span className="font-bold text-lg">Rs. {dish.price}</span>
-                </div>
-            </div>
-
-
-            <div className="relative w-32 aspect-square shrink-0 overflow-hidden">
-                {dish.imageUrl ? (
-                    <img
-                        src={getImageUrl(dish.imageUrl)}
-                        alt={dish.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                ) : (
-                    <></>
-                )}
-
-
-                <div className=" absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
-                    {quantity === 0 ? (
-                        <Button onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all">
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            Add
-                        </Button>
-                    ) : (
-                        <div className="flex items-center bg-secondary rounded-full overflow-hidden shadow-sm border border-border/50">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-800"
-                                onClick={handleDecrement}
-                            >
-                                <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="w-8 text-center font-medium text-sm select-none">
-                                {quantity}
-                            </span>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-800"
-                                onClick={handleIncrement}
-                            >
-                                <Plus className="h-3 w-3" />
-                            </Button>
-                        </div>
+        <>
+            <div className=" border-b border-dashed py-8 w-full bg-card  shadow-sm overflow-hidden flex group hover:shadow-md px-4 transition-all duration-300">
+                <div className=" flex flex-col grow">
+                    <h3 className="font-semibold text-lg leading-tight tracking-tight mb-1">{dish.name}</h3>
+                    <div className="flex items-center justify-between ">
+                        <span className=" text-sm font-medium">Rs. {dish.price}</span>
+                    </div>
+                    {dish.description && (
+                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2 mb-4 grow">
+                            {dish.description}
+                        </p>
                     )}
+
                 </div>
 
+                <div className="relative w-32 aspect-square shrink-0 overflow-hidden">
+                    {dish.imageUrl ? (
+                        <img
+                            src={getImageUrl(dish.imageUrl)}
+                            alt={dish.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                    ) : (
+                        <></>
+                    )}
 
+                    <div className=" absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
+                        {quantity === 0 ? (
+                            <Button onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap">
+                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                {hasOptions ? "Add +" : "Add"}
+                            </Button>
+                        ) : (
+                            <div className="flex items-center bg-secondary rounded-full overflow-hidden shadow-sm border border-border/50">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-800"
+                                    onClick={handleDecrement}
+                                >
+                                    <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="w-8 text-center font-medium text-sm select-none">
+                                    {quantity}
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-800"
+                                    onClick={handleIncrement}
+                                >
+                                    <Plus className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+                <DrawerContent>
+                    <div className="mx-auto w-full max-w-sm">
+                        <DrawerHeader>
+                            <DrawerTitle>Customize {dish.name}</DrawerTitle>
+                            <DrawerDescription>Select additional options for your dish.</DrawerDescription>
+                        </DrawerHeader>
+                        <div className=" px-3">
+                            <div className=" overflow-hidden pb-0 border rounded-lg border-dashed">
+                                <div className=" bg-gray-50 px-4 py-3 border-b border-dashed">
+
+                                    <p className=" font-medium "> Add {dish.minSelectOptions} to {dish.maxSelectOptions} addons </p>
+                                </div>
+                                <div className="">
+                                    {Array.isArray(dish.dishOptions) && dish.dishOptions.map((option: any) => {
+                                        const isSelected = selectedOptions.some(o => o.id === option.id);
+                                        return (
+                                            <div
+                                                key={option.id}
+                                                className="flex items-center justify-between p-3  cursor-pointer hover:bg-muted/50"
+                                                onClick={() => toggleOption(option)}
+                                            >
+                                                <span className=" text-sm  font-medium">{option.name}</span>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-muted-foreground">Rs. {option.price}</span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        readOnly
+                                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <div className=" mt-6 overflow-hidden pb-0 border rounded-lg border-dashed">
+
+                                <div className=" bg-gray-50 px-4 py-3 border-b border-dashed">
+                                    <p className="font-medium">
+                                        Please select addons
+                                    </p>
+                                </div>
+
+                                <div>
+                                    {Array.isArray(dish.addons) && dish.addons.map((option: any) => {
+                                        const isSelected = selectedOptions.some(o => o.id === option.id);
+
+                                        return (
+                                            <div
+                                                key={option.id}
+                                                className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50"
+                                                onClick={() => toggleOption(option)}
+                                            >
+                                                <span className="text-sm font-medium">
+                                                    {option.name}
+                                                </span>
+
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-muted-foreground">
+                                                        Rs. {option.price}
+                                                    </span>
+
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        readOnly
+                                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                        <DrawerFooter>
+                            <Button className=" h-10" onClick={confirmAddOptions}>Add to Cart - Rs. {dish.price + selectedOptions.reduce((sum, opt) => sum + opt.price, 0)}</Button>
+                            {/* <DrawerClose asChild>
+                                <Button variant="outline">Cancel</Button>
+                            </DrawerClose> */}
+                        </DrawerFooter>
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        </>
     );
 }

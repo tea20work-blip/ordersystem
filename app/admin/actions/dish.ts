@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/db";
-import { dish, dishCategory } from "@/db/schema";
+import { dish, dishCategory, addons } from "@/db/schema";
 import { eq, inArray, ilike } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -23,18 +23,25 @@ export async function getDish(id: number) {
         .from(dishCategory)
         .where(eq(dishCategory.dishId, id));
 
+    const addonsData = await db
+        .select({ addOnId: addons.addOnId })
+        .from(addons)
+        .where(eq(addons.dishId, id));
+
     return {
         ...dishData,
-        categoryIds: categories.map(c => c.categoryId)
+        categoryIds: categories.map(c => c.categoryId),
+        addonIds: addonsData.map(a => a.addOnId)
     };
 }
 
-export async function createDish(data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[] }) {
+export async function createDish(data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[] }) {
     const [newDish] = await db.insert(dish).values({
         name: data.name,
         price: data.price,
         description: data.description,
         imageUrl: data.imageUrl,
+        dishOptions: data.dishOptions || [],
     }).returning({ id: dish.id });
 
     if (data.categoryIds.length > 0) {
@@ -46,19 +53,30 @@ export async function createDish(data: { name: string; price: number; descriptio
         );
     }
 
+    if (data.addonIds && data.addonIds.length > 0) {
+        await db.insert(addons).values(
+            data.addonIds.map(aid => ({
+                dishId: newDish.id,
+                addOnId: aid
+            }))
+        );
+    }
+
     revalidatePath("/admin/dishes");
 }
 
-export async function updateDish(id: number, data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[] }) {
+export async function updateDish(id: number, data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[] }) {
     await db.update(dish).set({
         name: data.name,
         price: data.price,
         description: data.description,
         imageUrl: data.imageUrl,
+        dishOptions: data.dishOptions || [],
         updatedAt: new Date(),
     }).where(eq(dish.id, id));
 
     await db.delete(dishCategory).where(eq(dishCategory.dishId, id));
+    await db.delete(addons).where(eq(addons.dishId, id));
 
     if (data.categoryIds.length > 0) {
         await db.insert(dishCategory).values(
@@ -69,10 +87,20 @@ export async function updateDish(id: number, data: { name: string; price: number
         );
     }
 
+    if (data.addonIds && data.addonIds.length > 0) {
+        await db.insert(addons).values(
+            data.addonIds.map(aid => ({
+                dishId: id,
+                addOnId: aid
+            }))
+        );
+    }
+
     revalidatePath("/admin/dishes");
 }
 
 export async function deleteDish(id: number) {
+    await db.delete(addons).where(eq(addons.dishId, id));
     await db.delete(dishCategory).where(eq(dishCategory.dishId, id));
     await db.delete(dish).where(eq(dish.id, id));
     revalidatePath("/admin/dishes");

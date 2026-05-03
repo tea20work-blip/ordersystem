@@ -4,16 +4,24 @@ import { dish } from '@/db/schema';
 
 export type Dish = typeof dish.$inferSelect;
 
+export interface SelectedOption {
+    id: string;
+    name: string;
+    price: number;
+}
+
 export interface CartItem {
+    cartItemId: string;
     dish: Dish;
     quantity: number;
+    selectedOptions?: SelectedOption[];
 }
 
 interface CartState {
     items: CartItem[];
-    addItem: (dish: Dish) => void;
-    removeItem: (dishId: number) => void;
-    updateQuantity: (dishId: number, quantity: number) => void;
+    addItem: (dish: Dish, selectedOptions?: SelectedOption[]) => void;
+    removeItem: (cartItemId: string) => void;
+    updateQuantity: (cartItemId: string, quantity: number) => void;
     clearCart: () => void;
     getTotalItems: () => number;
     getTotalPrice: () => number;
@@ -24,36 +32,39 @@ export const useCartStore = create<CartState>()(
         (set, get) => ({
             items: [],
 
-            addItem: (dish) => {
+            addItem: (dish, selectedOptions = []) => {
                 const currentItems = get().items;
-                const existingItem = currentItems.find(item => item.dish.id === dish.id);
+                const sortedOptionIds = [...selectedOptions].map(o => o.id).sort().join(',');
+                const cartItemId = `${dish.id}${sortedOptionIds ? '-' + sortedOptionIds : ''}`;
+
+                const existingItem = currentItems.find(item => item.cartItemId === cartItemId);
 
                 if (existingItem) {
                     set({
                         items: currentItems.map(item =>
-                            item.dish.id === dish.id
+                            item.cartItemId === cartItemId
                                 ? { ...item, quantity: item.quantity + 1 }
                                 : item
                         )
                     });
                 } else {
-                    set({ items: [...currentItems, { dish, quantity: 1 }] });
+                    set({ items: [...currentItems, { cartItemId, dish, quantity: 1, selectedOptions }] });
                 }
             },
 
-            removeItem: (dishId) => {
-                set({ items: get().items.filter(item => item.dish.id !== dishId) });
+            removeItem: (cartItemId) => {
+                set({ items: get().items.filter(item => item.cartItemId !== cartItemId) });
             },
 
-            updateQuantity: (dishId, quantity) => {
+            updateQuantity: (cartItemId, quantity) => {
                 if (quantity <= 0) {
-                    get().removeItem(dishId);
+                    get().removeItem(cartItemId);
                     return;
                 }
 
                 set({
                     items: get().items.map(item =>
-                        item.dish.id === dishId
+                        item.cartItemId === cartItemId
                             ? { ...item, quantity }
                             : item
                     )
@@ -67,7 +78,10 @@ export const useCartStore = create<CartState>()(
             },
 
             getTotalPrice: () => {
-                return get().items.reduce((total, item) => total + (item.dish.price * item.quantity), 0);
+                return get().items.reduce((total, item) => {
+                    const optionsPrice = item.selectedOptions?.reduce((sum, opt) => sum + opt.price, 0) || 0;
+                    return total + ((item.dish.price + optionsPrice) * item.quantity);
+                }, 0);
             }
         }),
         {
