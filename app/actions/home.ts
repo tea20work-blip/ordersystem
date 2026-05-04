@@ -79,5 +79,6 @@ async function getMenu() {
 
 // ✅ cached function
 export const getCachedMenu = unstable_cache(getMenu, ["menu-data"], {
-    revalidate: 3600, // 1 hour
+    tags: ["menu-data"],
+    revalidate: 7200, // 2 hour
 });

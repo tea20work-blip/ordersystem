@@ -27,9 +27,9 @@ export function DishCard({ dish }: { dish: any }) {
     const dishCartItems = cartItems.filter((item) => item.dish.id === dish.id);
     const quantity = dishCartItems.reduce((sum, item) => sum + item.quantity, 0);
     const hasOptions = Array.isArray(dish.dishOptions) && dish.dishOptions.length > 0;
-
+    const hasAddons = Array.isArray(dish.addons) && dish.addons.length > 0;
     const handleAdd = () => {
-        if (hasOptions) {
+        if (hasOptions || hasAddons) {
             setSelectedOptions([]);
             setIsDrawerOpen(true);
         } else {
@@ -108,8 +108,8 @@ export function DishCard({ dish }: { dish: any }) {
                     <div className=" absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
                         {quantity === 0 ? (
                             <Button onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap">
-                                <ShoppingCart className="h-4 w-4 mr-2" />
-                                {hasOptions ? "Add +" : "Add"}
+                                {/* <ShoppingCart className="h-4 w-4 mr-2" /> */}
+                                {(hasOptions || hasAddons) ? "Add +" : "Add"}
                             </Button>
                         ) : (
                             <div className="flex items-center bg-secondary rounded-full overflow-hidden shadow-sm border border-border/50">

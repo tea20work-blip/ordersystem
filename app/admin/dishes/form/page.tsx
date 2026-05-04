@@ -9,6 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import { getImageUrl } from "@/lib/s3";
 import { DishOptionsInput, DishOption } from "./DishOptionsInput";
+import { revalidateTag } from "next/cache";
 
 export default async function DishFormPage({
     searchParams,
@@ -47,10 +48,10 @@ export default async function DishFormPage({
 
         // Get all checked category IDs
         const categoryIds = formData.getAll("categories").map(id => parseInt(id as string, 10));
-        
+
         // Get all checked addon IDs
         const addonIds = formData.getAll("addons").map(id => parseInt(id as string, 10));
-        
+
         let dishOptions: DishOption[] = [];
         try {
             const dishOptionsJson = formData.get("dishOptionsJson") as string;
@@ -66,6 +67,7 @@ export default async function DishFormPage({
         } else {
             await createDish({ name, price, description, imageUrl, categoryIds, addonIds, dishOptions });
         }
+        revalidateTag("menu-data", "max");
 
         redirect("/admin/dishes");
     }
@@ -163,21 +165,21 @@ export default async function DishFormPage({
                                 allProducts
                                     .filter(p => !isEdit || p.id !== dishId)
                                     .map(product => (
-                                    <div key={product.id} className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            id={`addon-${product.id}`}
-                                            name="addons"
-                                            value={product.id}
-                                            // @ts-ignore
-                                            defaultChecked={dishData?.addonIds?.includes(product.id)}
-                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                        <Label htmlFor={`addon-${product.id}`} className="font-normal cursor-pointer">
-                                            {product.name} (Rs. {product.price})
-                                        </Label>
-                                    </div>
-                                ))
+                                        <div key={product.id} className="flex items-center space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                id={`addon-${product.id}`}
+                                                name="addons"
+                                                value={product.id}
+                                                // @ts-ignore
+                                                defaultChecked={dishData?.addonIds?.includes(product.id)}
+                                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                            <Label htmlFor={`addon-${product.id}`} className="font-normal cursor-pointer">
+                                                {product.name} (Rs. {product.price})
+                                            </Label>
+                                        </div>
+                                    ))
                             )}
                         </div>
                     </div>
