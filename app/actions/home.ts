@@ -44,6 +44,7 @@ async function getMenu() {
                 acc[row.categoryId] = {
                     id: row.categoryId,
                     name: row.categoryName,
+                    categoryPriority: row.categoryPriority,
                     dishes: [],
                 };
             }
@@ -77,7 +78,9 @@ async function getMenu() {
     )
 
 
-    return grouped;
+
+    console.log(grouped)
+    return grouped.sort((a: any, b: any) => (b.categoryPriority || 0) - (a.categoryPriority || 0));
 }
 
 // ✅ cached function
