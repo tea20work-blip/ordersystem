@@ -36,6 +36,8 @@ export default async function DishFormPage({
 
         const imageFile = formData.get("imageFile") as File | null;
         const imageFileRemoved = formData.get("imageFileRemoved") === "true";
+        const isOutOfStock = formData.get("isOutOfStock") === "on";
+        const isHidden = formData.get("isHidden") === "on";
         let imageUrl = dishData?.imageUrl || "";
 
         if (imageFileRemoved) {
@@ -63,9 +65,9 @@ export default async function DishFormPage({
         }
 
         if (isEdit && dishId) {
-            await updateDish(dishId, { name, price, description, imageUrl, categoryIds, addonIds, dishOptions });
+            await updateDish(dishId, { name, price, description, imageUrl, categoryIds, addonIds, dishOptions, isOutOfStock, isHidden });
         } else {
-            await createDish({ name, price, description, imageUrl, categoryIds, addonIds, dishOptions });
+            await createDish({ name, price, description, imageUrl, categoryIds, addonIds, dishOptions, isOutOfStock, isHidden });
         }
         revalidateTag("menu-data", "max");
 
@@ -129,6 +131,33 @@ export default async function DishFormPage({
                             defaultValue={dishData?.description || ""}
                             placeholder="A delicious classic pizza..."
                         />
+                    </div>
+
+                    <div className="flex gap-6 pt-2">
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="isOutOfStock"
+                                name="isOutOfStock"
+                                defaultChecked={dishData?.isOutOfStock || false}
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor="isOutOfStock" className="font-normal cursor-pointer">
+                                Is Out Of Stock
+                            </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="isHidden"
+                                name="isHidden"
+                                defaultChecked={dishData?.isHidden || false}
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor="isHidden" className="font-normal cursor-pointer">
+                                Is Hidden
+                            </Label>
+                        </div>
                     </div>
 
                     <div className="space-y-3">

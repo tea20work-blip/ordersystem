@@ -3,7 +3,7 @@
 import { unstable_cache } from "next/cache";
 import db from "@/db";
 import { addons, category, dish, dishCategory } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 const addonDish = alias(dish, "addonDish");
@@ -22,6 +22,7 @@ async function getMenu() {
             dishOptions: dish.dishOptions,
             maxSelectOptions: dish.maxSelectOptions,
             minSelectOptions: dish.minSelectOptions,
+            isOutOfStock: dish.isOutOfStock,
 
             dishPriority: dish.priority,
             categoryPriority: category.priority,
@@ -33,8 +34,9 @@ async function getMenu() {
         .from(category)
         .leftJoin(dishCategory, eq(category.id, dishCategory.categoryId))
         .leftJoin(dish, eq(dishCategory.dishId, dish.id))
+        .where(and(eq(dish.isHidden, false), eq(dish.isDeleted, false)))
         .leftJoin(addons, eq(dish.id, addons.dishId))
-        .leftJoin(addonDish, eq(addons.addOnId, addonDish.id));
+        .leftJoin(addonDish, eq(addons.addOnId, addonDish.id))
 
     data.sort((a, b) => (b.dishPriority || 0) - (a.dishPriority || 0));
 
@@ -60,6 +62,7 @@ async function getMenu() {
                         dishOptions: row.dishOptions,
                         maxSelectOptions: row.maxSelectOptions,
                         minSelectOptions: row.minSelectOptions,
+                        category: row.categoryName,
                         addons: [],
                     });
                 }

@@ -9,10 +9,11 @@ export const user = pgTable("user", {
     isEmailVerified: boolean("is_email_verified").default(false),
     isNumberVerified: boolean("is_number_verified").default(false),
     createdAt: timestamp("created_at").defaultNow(),
+    lendingAmount: integer("lending_amount").default(0),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const orderStatus = pgEnum("order_status", ["pending", "completed", "cancelled"]);
+export const orderStatus = pgEnum("order_status", ["pending", "completed", "cancelled", "paid_online", "paid_cash", "paid_user"]);
 
 
 export const cigarette = pgTable("cigarette", {
@@ -42,6 +43,9 @@ export const dish = pgTable("dish", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     dishOptions: jsonb("dish_options").array(),
+    isOutOfStock: boolean("is_out_of_stock").default(false),
+    isHidden: boolean("is_hidden").default(false),
+    isDeleted: boolean("is_deleted").default(false),
     maxSelectOptions: integer("max_select_options").default(1),
     minSelectOptions: integer("min_select_options").default(0),
 });
@@ -73,9 +77,11 @@ export const dishCategory = pgTable("dish_category", {
 export const order = pgTable("order", {
     id: serial("id").primaryKey(),
     tableId: integer("table_id").notNull().references(() => table.id),
+    isRunning: boolean("is_running").default(true),
     userId: integer("user_id").references(() => user.id),
     totalPricing: integer("total_pricing").notNull(),
     status: orderStatus("status").default("pending"),
+    lendingUserId: integer("lending_user_id").references(() => user.id),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });

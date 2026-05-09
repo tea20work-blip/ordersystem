@@ -2,14 +2,14 @@
 
 import db from "@/db";
 import { dish, dishCategory, addons } from "@/db/schema";
-import { eq, inArray, ilike } from "drizzle-orm";
+import { eq, inArray, ilike, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getDishes(searchQuery?: string) {
     if (searchQuery && searchQuery.trim() !== "") {
-        return await db.select().from(dish).where(ilike(dish.name, `%${searchQuery}%`)).orderBy(dish.createdAt);
+        return await db.select().from(dish).where(and(ilike(dish.name, `%${searchQuery}%`), eq(dish.isDeleted, false))).orderBy(dish.createdAt);
     }
-    return await db.select().from(dish).orderBy(dish.createdAt);
+    return await db.select().from(dish).where(eq(dish.isDeleted, false)).orderBy(dish.createdAt);
 }
 
 export async function getDish(id: number) {
@@ -35,13 +35,15 @@ export async function getDish(id: number) {
     };
 }
 
-export async function createDish(data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[] }) {
+export async function createDish(data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], isOutOfStock?: boolean, isHidden?: boolean }) {
     const [newDish] = await db.insert(dish).values({
         name: data.name,
         price: data.price,
         description: data.description,
         imageUrl: data.imageUrl,
         dishOptions: data.dishOptions || [],
+        isOutOfStock: data.isOutOfStock || false,
+        isHidden: data.isHidden || false,
     }).returning({ id: dish.id });
 
     if (data.categoryIds.length > 0) {
@@ -65,13 +67,15 @@ export async function createDish(data: { name: string; price: number; descriptio
     revalidatePath("/admin/dishes");
 }
 
-export async function updateDish(id: number, data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[] }) {
+export async function updateDish(id: number, data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], isOutOfStock?: boolean, isHidden?: boolean }) {
     await db.update(dish).set({
         name: data.name,
         price: data.price,
         description: data.description,
         imageUrl: data.imageUrl,
         dishOptions: data.dishOptions || [],
+        isOutOfStock: data.isOutOfStock || false,
+        isHidden: data.isHidden || false,
         updatedAt: new Date(),
     }).where(eq(dish.id, id));
 

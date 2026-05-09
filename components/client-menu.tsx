@@ -16,14 +16,16 @@ type Dish = {
 };
 
 export function ClientMenu({ initialDishes }: { initialDishes: any }) {
-
+    console.log(initialDishes)
     const [searchQuery, setSearchQuery] = useState("");
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
     };
 
-    const filteredDishes = initialDishes.filter((category: any) => category.dishes.some((dish: any) => dish.name.toLowerCase().includes(searchQuery.toLowerCase()) || dish.description?.toLowerCase().includes(searchQuery.toLowerCase())));
+    const filteredDishes = initialDishes.map((category: any) => {
+        return { ...category, dishes: category.dishes.filter((dish: any) => dish.name.toLowerCase().includes(searchQuery.toLowerCase()) || dish.category.toLowerCase().includes(searchQuery.toLowerCase()) || dish.description.toLowerCase().includes(searchQuery.toLowerCase())) }
+    })
 
     let dishCount = filteredDishes.reduce((acc: number, category: any) => acc + category.dishes.length, 0);
 
@@ -59,15 +61,18 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1">
-                        {filteredDishes.map((category: any) => (
-                            <div>
-                                <h1 className=" bg-gray-200 text-gray-800 py-2 px-4 font-semibold text-sm">{category.name}</h1>
+                        {filteredDishes.map((category: any) => {
+                            if (category.dishes?.length <= 0) return null;
+                            return (
+                                <div>
+                                    <h1 className=" bg-gray-200 text-gray-800 py-2 px-4 font-semibold text-sm">{category.name}</h1>
 
-                                {category.dishes.map((dish: any) => (
-                                    <DishCard key={dish.id} dish={dish} />
-                                ))}
-                            </div>
-                        ))}
+                                    {category.dishes.map((dish: any) => (
+                                        <DishCard key={dish.id} dish={dish} />
+                                    ))}
+                                </div>
+                            )
+                        })}
                     </div>
                 )}
             </main>
