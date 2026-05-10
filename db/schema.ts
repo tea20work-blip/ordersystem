@@ -76,10 +76,13 @@ export const dishCategory = pgTable("dish_category", {
 
 export const order = pgTable("order", {
     id: serial("id").primaryKey(),
-    tableId: integer("table_id").notNull().references(() => table.id),
+    tableId: integer("table_id").references(() => table.id),
     isRunning: boolean("is_running").default(true),
     userId: integer("user_id").references(() => user.id),
     totalPricing: integer("total_pricing").notNull(),
+    paidOnline: integer("paid_online").default(0),
+    paidCash: integer("paid_cash").default(0),
+    lendingAmount: integer("lending_amount").default(0),
     status: orderStatus("status").default("pending"),
     lendingUserId: integer("lending_user_id").references(() => user.id),
     createdAt: timestamp("created_at").defaultNow(),

@@ -14,6 +14,7 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from "@/components/ui/drawer";
+import { ButtonGroup } from "./ui/button-group";
 
 export function DishCard({ dish }: { dish: any }) {
     const cartItems = useCartStore((state) => state.items);
@@ -80,9 +81,9 @@ export function DishCard({ dish }: { dish: any }) {
 
     return (
         <>
-            <div className=" border-b border-dashed py-4 w-full bg-card  shadow-sm overflow-hidden flex group hover:shadow-md px-4 transition-all duration-300">
+            <div className=" border-b py-4 w-full items-center flex group hover:shadow-md px-4 transition-all duration-300">
                 <div className=" flex flex-col grow">
-                    <h3 className="font-semibold text-lg leading-tight tracking-tight mb-1">{dish.name}</h3>
+                    <h3 className="font-medium leading-tight tracking-tight mb-1">{dish.name}</h3>
                     <div className="flex items-center justify-between ">
                         <span className=" text-sm font-medium">Rs. {dish.price}</span>
                     </div>
@@ -107,31 +108,33 @@ export function DishCard({ dish }: { dish: any }) {
 
                     <div className=" absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
                         {quantity === 0 ? (
-                            <Button onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap px-4">
+                            <Button variant={"outline"} onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap px-4">
                                 {/* <ShoppingCart className="h-4 w-4 mr-2" /> */}
                                 {(hasOptions || hasAddons) ? "Add +" : "Add"}
                             </Button>
                         ) : (
                             <div className="flex items-center bg-secondary rounded-full overflow-hidden shadow-sm border border-border/50">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-800"
-                                    onClick={handleDecrement}
-                                >
-                                    <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="w-8 text-center font-medium text-sm select-none">
-                                    {quantity}
-                                </span>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-800"
-                                    onClick={handleIncrement}
-                                >
-                                    <Plus className="h-3 w-3" />
-                                </Button>
+                                <ButtonGroup>
+                                    <Button
+                                        size="icon"
+                                        onClick={handleDecrement}
+                                    >
+                                        <Minus className="h-3 w-3" />
+                                    </Button>
+
+                                    <Button
+                                        className="pointer-events-none min-w-10"
+                                    >
+                                        {quantity}
+                                    </Button>
+
+                                    <Button
+                                        size="icon"
+                                        onClick={handleIncrement}
+                                    >
+                                        <Plus className="h-3 w-3" />
+                                    </Button>
+                                </ButtonGroup>
                             </div>
                         )}
                     </div>
@@ -179,7 +182,7 @@ export function DishCard({ dish }: { dish: any }) {
 
                             <div className=" bg-gray-50 px-4 py-3 border-b border-dashed">
                                 <p className="font-medium">
-                                    Must try
+                                    Must Try
                                 </p>
                             </div>
 
@@ -218,8 +221,8 @@ export function DishCard({ dish }: { dish: any }) {
                     <DrawerFooter>
                         <Button className=" h-10" onClick={confirmAddOptions}>Add to Cart - Rs. {dish.price + selectedOptions.reduce((sum, opt) => sum + opt.price, 0)}</Button>
                         {/* <DrawerClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                            </DrawerClose> */}
+                                    <Button variant="outline">Cancel</Button>
+                                </DrawerClose> */}
                     </DrawerFooter>
 
                 </DrawerContent>

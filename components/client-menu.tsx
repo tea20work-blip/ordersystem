@@ -16,7 +16,6 @@ type Dish = {
 };
 
 export function ClientMenu({ initialDishes }: { initialDishes: any }) {
-    console.log(initialDishes)
     const [searchQuery, setSearchQuery] = useState("");
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,8 +30,8 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
 
     return (
         <>
-            <div className="sticky px-4 w-full bg-white z-20 border-b py-4 top-0">
-                <InputGroup className="max-w-none w-full">
+            <div className="sticky px-4 w-full bg-white z-20 border-b py-4 top-16">
+                <InputGroup className="max-w-none w-full border-2 border-[#774936]">
                     <InputGroupInput
                         placeholder="Search dishes..."
                         value={searchQuery}
@@ -64,8 +63,8 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
                         {filteredDishes.map((category: any) => {
                             if (category.dishes?.length <= 0) return null;
                             return (
-                                <div>
-                                    <h1 className=" bg-gray-200 text-gray-800 py-2 px-4 font-semibold text-sm">{category.name}</h1>
+                                <div className=" mb-3 shadow">
+                                    <h1 className=" bg-[#774936] text-white py-2 px-4 font-semibold">{category.name}</h1>
 
                                     {category.dishes.map((dish: any) => (
                                         <DishCard key={dish.id} dish={dish} />

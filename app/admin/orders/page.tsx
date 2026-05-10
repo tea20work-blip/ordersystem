@@ -3,20 +3,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { OrderDialogClient } from "./OrderDialogClient";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
     const params = await searchParams;
     const page = Number(params.page) || 1;
     const limit = 10;
-    
+
     const { orders, totalPages } = await getOrders(page, limit);
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-            </div>
+
 
             <div className="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden">
                 <Table>
@@ -52,11 +50,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                                     <TableCell>{order.tableName || "N/A"}</TableCell>
                                     <TableCell className="font-semibold">Rs. {order.totalPricing}</TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                            'bg-yellow-100 text-yellow-800'
-                                        }`}>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                    'bg-yellow-100 text-yellow-800'
+                                            }`}>
                                             {order.status}
                                         </span>
                                     </TableCell>
@@ -68,7 +65,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                         )}
                     </TableBody>
                 </Table>
-                
+
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between px-4 py-3 border-t">

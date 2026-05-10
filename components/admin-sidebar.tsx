@@ -11,7 +11,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, List, Utensils, Armchair, ClipboardList } from "lucide-react";
+import { LayoutDashboard, List, Utensils, Armchair, ClipboardList, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -40,6 +40,11 @@ const items = [
         title: "Orders",
         url: "/admin/orders",
         icon: ClipboardList,
+    },
+    {
+        title: "User",
+        url: "/admin/user",
+        icon: User,
     },
 ];
 

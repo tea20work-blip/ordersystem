@@ -4,7 +4,7 @@ export default function UserLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen max-w-lg mx-auto">
+        <div className="min-h-screen max-w-md mx-auto">
             {children}
         </div>
     );

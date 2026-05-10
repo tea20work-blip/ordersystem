@@ -16,7 +16,7 @@ export function Header() {
     }, []);
 
     return (
-        <header className="z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <header className="z-50 h-16 sticky top-0 w-full border-b bg-white">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between max-w-7xl">
                 <Link href="/" className="font-bold text-xl tracking-tight flex items-center gap-2">
                     <span>🍽️</span> Tea 20

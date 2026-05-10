@@ -8,7 +8,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { getOrderDetails, updateOrderStatus } from "../actions/order";
+import { getOrderDetails, updateOrderAdvanced } from "../actions/order";
+import { getUsers } from "../actions/user";
 import { Eye } from "lucide-react";
 import { getImageUrl } from "@/lib/s3";
 
@@ -18,10 +19,30 @@ export function OrderDialogClient({ order }: { order: any }) {
     const [loading, setLoading] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
 
-    const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const [status, setStatus] = useState<string>(order.status);
+    const [isRunning, setIsRunning] = useState<boolean>(order.isRunning);
+    const [lendingUserId, setLendingUserId] = useState<string>(order.lendingUserId ? order.lendingUserId.toString() : "");
+    const [paidOnline, setPaidOnline] = useState<number>(order.paidOnline || 0);
+    const [paidCash, setPaidCash] = useState<number>(order.paidCash || 0);
+    const [users, setUsers] = useState<any[]>([]);
+
+    const calculatedLendingAmount = Math.max(0, order.totalPricing - (paidOnline || 0) - (paidCash || 0));
+
+    const isAlreadyPaid = ['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(order.status);
+
+    const handleSave = async () => {
         setIsUpdating(true);
         try {
-            await updateOrderStatus(order.id, e.target.value as any);
+            await updateOrderAdvanced(order.id, {
+                status: status as any,
+                isRunning,
+                lendingUserId: lendingUserId ? parseInt(lendingUserId) : null,
+                totalPricing: order.totalPricing,
+                paidOnline,
+                paidCash,
+                lendingAmount: status === 'completed' ? calculatedLendingAmount : undefined,
+            });
+            setOpen(false);
         } catch (err) {
             console.error(err);
         } finally {
@@ -42,6 +63,9 @@ export function OrderDialogClient({ order }: { order: any }) {
                 setLoading(false);
             }
         }
+        if (users.length === 0) {
+            getUsers().then(setUsers).catch(console.error);
+        }
     };
 
     return (
@@ -55,7 +79,7 @@ export function OrderDialogClient({ order }: { order: any }) {
                     <DialogHeader>
                         <DialogTitle>Order Details #{order.id}</DialogTitle>
                     </DialogHeader>
-                    
+
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                         <div>
                             <span className="font-semibold text-muted-foreground">Customer Name:</span> {order.userName || "N/A"}
@@ -69,19 +93,114 @@ export function OrderDialogClient({ order }: { order: any }) {
                         <div>
                             <span className="font-semibold text-muted-foreground">Total:</span> Rs. {order.totalPricing}
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold text-muted-foreground">Status:</span> 
-                            <select 
-                                defaultValue={order.status} 
-                                onChange={handleStatusChange}
-                                disabled={isUpdating}
-                                className="border rounded px-2 py-1 text-sm bg-background"
-                            >
-                                <option value="pending">Pending</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                            {isUpdating && <span className="text-xs text-muted-foreground">Updating...</span>}
+                        <div className="flex flex-col gap-3 col-span-2 border p-3 rounded bg-muted/30">
+                            {isAlreadyPaid ? (
+                                <div className="text-sm text-green-600 font-medium py-2">
+                                    This order has been marked as paid ({order.status}) and cannot be modified further.
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-4">
+                                        <span className="font-semibold text-muted-foreground w-20">Status:</span>
+                                        <select
+                                            value={status}
+                                            onChange={(e) => {
+                                                setStatus(e.target.value);
+                                                if (['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(e.target.value)) {
+                                                    setIsRunning(false);
+                                                }
+                                            }}
+                                            className="border rounded px-2 py-1 text-sm bg-background flex-1"
+                                        >
+                                            <option value="pending">Pending</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                            <option value="paid_online">Paid Online</option>
+                                            <option value="paid_cash">Paid Cash</option>
+                                            <option value="paid_user">Paid User (Lending)</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <span className="font-semibold text-muted-foreground w-20">Running:</span>
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={isRunning}
+                                                onChange={(e) => setIsRunning(e.target.checked)}
+                                                disabled={['paid_online', 'paid_cash', 'paid_user'].includes(status)}
+                                                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
+                                            />
+                                            <span className="text-xs text-muted-foreground ml-2">Is the order currently active?</span>
+                                        </div>
+                                    </div>
+
+                                    {status === 'paid_user' && (
+                                        <div className="flex items-center gap-4">
+                                            <span className="font-semibold text-muted-foreground w-20">Select User:</span>
+                                            <select
+                                                value={lendingUserId}
+                                                onChange={(e) => setLendingUserId(e.target.value)}
+                                                className="border rounded px-2 py-1 text-sm bg-background flex-1"
+                                            >
+                                                <option value="">-- Select a User --</option>
+                                                {users.map(u => (
+                                                    <option key={u.id} value={u.id}>{u.name || 'Unknown'} ({u.number})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {status === 'completed' && (
+                                        <div className="flex flex-col gap-3 mt-2 border-t pt-3">
+                                            <div className="flex items-center gap-4">
+                                                <span className="font-semibold text-muted-foreground w-32">Paid Online:</span>
+                                                <input
+                                                    type="number"
+                                                    value={paidOnline}
+                                                    onChange={(e) => setPaidOnline(Number(e.target.value))}
+                                                    className="border rounded px-2 py-1 text-sm bg-background flex-1"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <span className="font-semibold text-muted-foreground w-32">Paid Cash:</span>
+                                                <input
+                                                    type="number"
+                                                    value={paidCash}
+                                                    onChange={(e) => setPaidCash(Number(e.target.value))}
+                                                    className="border rounded px-2 py-1 text-sm bg-background flex-1"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <span className="font-semibold text-muted-foreground w-32">Lending Amount:</span>
+                                                <span className="font-semibold">Rs. {calculatedLendingAmount}</span>
+                                            </div>
+
+                                            {calculatedLendingAmount > 0 && (
+                                                <div className="flex items-center gap-4">
+                                                    <span className="font-semibold text-muted-foreground w-32 text-red-500">Select User (Req):</span>
+                                                    <select
+                                                        value={lendingUserId}
+                                                        onChange={(e) => setLendingUserId(e.target.value)}
+                                                        className="border rounded px-2 py-1 text-sm bg-background flex-1 border-red-300"
+                                                    >
+                                                        <option value="">-- Select a User --</option>
+                                                        {users.map(u => (
+                                                            <option key={u.id} value={u.id}>{u.name || 'Unknown'} ({u.number})</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="mt-2 flex justify-end">
+                                        <Button onClick={handleSave} disabled={isUpdating || (status === 'paid_user' && !lendingUserId) || (status === 'completed' && calculatedLendingAmount > 0 && !lendingUserId)} size="sm">
+                                            {isUpdating ? "Saving..." : "Save Order Settings"}
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                         <div>
                             <span className="font-semibold text-muted-foreground">Date:</span> {new Date(order.createdAt).toLocaleString()}
