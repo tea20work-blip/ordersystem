@@ -53,6 +53,7 @@ export const dish = pgTable("dish", {
 export const table = pgTable("table", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
+    tableCode: varchar("table_code", { length: 255 }).unique().notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });

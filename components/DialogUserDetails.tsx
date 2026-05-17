@@ -81,7 +81,7 @@ export function DialogUserDetails({
                     </div>
 
                     {/* Table Name */}
-                    <div>
+                    {/* <div>
                         <Label>Table Name</Label>
                         <Input {...register("tableName")} />
                         {errors.tableName && (
@@ -89,7 +89,7 @@ export function DialogUserDetails({
                                 {errors.tableName.message}
                             </p>
                         )}
-                    </div>
+                    </div> */}
 
                     {/* Email */}
                     <div>

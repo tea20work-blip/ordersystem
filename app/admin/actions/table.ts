@@ -34,9 +34,10 @@ export async function getTable(id: number) {
     return result[0];
 }
 
-export async function createTable(data: { name: string }) {
+export async function createTable(data: { name: string, tableCode: string }) {
     await db.insert(table).values({
         name: data.name,
+        tableCode: data.tableCode
     });
     revalidatePath("/admin/tables");
 }

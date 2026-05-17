@@ -81,7 +81,7 @@ export function DishCard({ dish }: { dish: any }) {
 
     return (
         <>
-            <div className=" border-b py-4 w-full items-center flex group hover:shadow-md px-4 transition-all duration-300">
+            <div className=" border-b py-6 w-full items-center flex group hover:shadow-md px-4 transition-all duration-300">
                 <div className=" flex flex-col grow">
                     <h3 className="font-medium leading-tight tracking-tight mb-1">{dish.name}</h3>
                     <div className="flex items-center justify-between ">
@@ -95,44 +95,47 @@ export function DishCard({ dish }: { dish: any }) {
 
                 </div>
 
-                <div className="relative h-24 w-28 shrink-0 overflow-hidden">
+                <div className="relative h-24 w-28 shrink-0">
                     {dish.imageUrl ? (
                         <img
                             src={getImageUrl(dish.imageUrl)}
                             alt={dish.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-cover"
                         />
                     ) : (
                         <></>
                     )}
 
-                    <div className=" absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
+                    <div className=" absolute -bottom-1 left-1/2 -translate-x-1/2 z-10">
                         {quantity === 0 ? (
-                            <Button variant={"outline"} onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap px-4">
-                                {/* <ShoppingCart className="h-4 w-4 mr-2" /> */}
-                                {(hasOptions || hasAddons) ? "Add +" : "Add"}
-                            </Button>
+                            <div className=" flex gap-1 flex-col">
+                                <Button variant={"outline"} onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap px-4">
+                                    Add
+                                </Button>
+                                {(hasOptions || hasAddons) && <p className=" absolute -left-4 -bottom-4.5 font-semibold text-xs">CUSTOMIZABLE</p>}
+
+                            </div>
                         ) : (
                             <div className="flex items-center bg-secondary rounded-full overflow-hidden shadow-sm border border-border/50">
                                 <ButtonGroup>
                                     <Button
-                                        size="icon"
+                                        size="sm"
                                         onClick={handleDecrement}
                                     >
-                                        <Minus className="h-3 w-3" />
+                                        <Minus className=" size-2" />
                                     </Button>
-
                                     <Button
+                                        size={"sm"}
                                         className="pointer-events-none min-w-10"
                                     >
                                         {quantity}
                                     </Button>
 
                                     <Button
-                                        size="icon"
+                                        size="sm"
                                         onClick={handleIncrement}
                                     >
-                                        <Plus className="h-3 w-3" />
+                                        <Plus className=" size-2" />
                                     </Button>
                                 </ButtonGroup>
                             </div>
@@ -142,7 +145,7 @@ export function DishCard({ dish }: { dish: any }) {
             </div>
 
             <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-                <DrawerContent className=" data-[vaul-drawer-direction=bottom]:max-h-[80vh] z-[999] max-w-lg w-full mx-auto">
+                <DrawerContent className=" data-[vaul-drawer-direction=bottom]:max-h-[80vh] z-999 max-w-lg w-full mx-auto">
 
                     <DrawerHeader>
                         <DrawerTitle>Customize {dish.name}</DrawerTitle>
@@ -219,10 +222,9 @@ export function DishCard({ dish }: { dish: any }) {
                         </div>
                     </div>
                     <DrawerFooter>
-                        <Button className=" h-10" onClick={confirmAddOptions}>Add to Cart - Rs. {dish.price + selectedOptions.reduce((sum, opt) => sum + opt.price, 0)}</Button>
-                        {/* <DrawerClose asChild>
-                                    <Button variant="outline">Cancel</Button>
-                                </DrawerClose> */}
+                        <Button className=" h-10" onClick={confirmAddOptions}>
+                            Add to Cart - Rs. {dish.price + selectedOptions.reduce((sum, opt) => sum + opt.price, 0)}
+                        </Button>
                     </DrawerFooter>
 
                 </DrawerContent>

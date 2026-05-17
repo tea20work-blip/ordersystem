@@ -14,8 +14,8 @@ export async function POST(req: Request) {
         if (tableRecord.length > 0) {
             tableId = tableRecord[0].id;
         } else {
-            const newTable = await db.insert(table).values({ name: tableName }).returning();
-            tableId = newTable[0].id;
+            // const newTable = await db.insert(table).values({ name: tableName }).returning();
+            // tableId = newTable[0].id;
         }
 
         // 2. Insert user

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DishCard } from "@/components/dish-card";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Search, X } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Dish = {
     id: number;
@@ -17,6 +19,10 @@ type Dish = {
 
 export function ClientMenu({ initialDishes }: { initialDishes: any }) {
     const [searchQuery, setSearchQuery] = useState("");
+    const searchParams = useSearchParams();
+    const tableCode = searchParams.get("tc");
+    const [orderType, setOrderType] = useState("dineout");
+    const router = useRouter();
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
@@ -27,6 +33,22 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
     })
 
     let dishCount = filteredDishes.reduce((acc: number, category: any) => acc + category.dishes.length, 0);
+
+    useEffect(() => {
+        async function validateTable() {
+            if (orderType !== "dineout") {
+                if (!tableCode) router.push("/qr")
+                const tableCodes = await fetch('/api/table/${tableCode}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ orderType }),
+                });
+            }
+        }
+        validateTable();
+    }, [orderType])
 
     return (
         <>
@@ -45,6 +67,32 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
                     {searchQuery.trim() !== "" && <InputGroupAddon align="inline-end"><X onClick={() => setSearchQuery("")} className="h-4 w-4 text-muted-foreground" /></InputGroupAddon>}
 
                 </InputGroup>
+
+                <ToggleGroup
+                    className="mt-4 flex gap-2"
+                    variant="outline"
+                    type="single"
+                    value={orderType}
+                    onValueChange={(value) => {
+                        if (value) setOrderType(value);
+                    }}
+                >
+                    <ToggleGroupItem
+                        className="rounded-full! text-sm font-semibold data-[state=on]:bg-primary data-[state=on]:text-white"
+                        value="dinein"
+                        aria-label="Toggle dinein"
+                    >
+                        Dine-in
+                    </ToggleGroupItem>
+
+                    <ToggleGroupItem
+                        className="rounded-full! text-sm font-semibold data-[state=on]:bg-primary data-[state=on]:text-white"
+                        value="dineout"
+                        aria-label="Toggle dineout"
+                    >
+                        Takeaway
+                    </ToggleGroupItem>
+                </ToggleGroup>
             </div>
 
             <main className=" w-full mx-auto py-8">
@@ -62,7 +110,7 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
                         {filteredDishes.map((category: any) => {
                             if (category.dishes?.length <= 0) return null;
                             return (
-                                <div id={category.id} className=" mb-3 shadow">
+                                <div key={category.id} id={category.id} className=" mb-3 shadow">
                                     <h1 className=" bg-[#774936] text-white py-2 px-4 font-semibold">{category.name}</h1>
 
                                     {category.dishes.map((dish: any) => (

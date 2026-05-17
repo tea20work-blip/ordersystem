@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
+import { getRendomTableName } from "@/helper/getRendomTableName";
 
 export default async function TableFormPage({
     searchParams,
@@ -20,13 +21,13 @@ export default async function TableFormPage({
     async function handleSubmit(formData: FormData) {
         "use server";
         const name = formData.get("name") as string;
+        const tableCode = formData.get("tableCode") as string;
 
         if (isEdit && tableId) {
             await updateTable(tableId, { name });
         } else {
-            await createTable({ name });
+            await createTable({ name, tableCode });
         }
-
         redirect("/admin/tables");
     }
 
@@ -52,6 +53,17 @@ export default async function TableFormPage({
                             name="name"
                             defaultValue={tableData?.name || ""}
                             required
+                            placeholder="e.g. Table 1"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="tableCode">Table Code</Label>
+                        <Input
+                            id="tableCode"
+                            name="tableCode"
+                            defaultValue={tableData?.tableCode ? tableData.tableCode : getRendomTableName().toUpperCase()}
+                            required
+                            disabled={!!tableId}
                             placeholder="e.g. Table 1"
                         />
                     </div>
