@@ -20,8 +20,10 @@ async function getMenu() {
             dishDescription: dish.description,
             dishImageUrl: dish.imageUrl,
             dishOptions: dish.dishOptions,
+            dishVarients: dish.dishVarients,
             maxSelectOptions: dish.maxSelectOptions,
-            minSelectOptions: dish.minSelectOptions,
+            maxSelectVarient: dish.maxSelectVarient,
+            minSelectVarient: dish.minSelectVarient,
             isOutOfStock: dish.isOutOfStock,
 
             dishPriority: dish.priority,
@@ -60,8 +62,10 @@ async function getMenu() {
                         description: row.dishDescription,
                         imageUrl: row.dishImageUrl,
                         dishOptions: row.dishOptions,
+                        dishVarients: row.dishVarients,
                         maxSelectOptions: row.maxSelectOptions,
-                        minSelectOptions: row.minSelectOptions,
+                        maxSelectVarient: row.maxSelectVarient,
+                        minSelectVarient: row.minSelectVarient,
                         category: row.categoryName,
                         addons: [],
                     });

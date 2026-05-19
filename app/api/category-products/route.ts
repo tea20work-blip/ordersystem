@@ -19,8 +19,10 @@ export async function GET() {
             dishDescription: dish.description,
             dishImageUrl: dish.imageUrl,
             dishOptions: dish.dishOptions,
+            dishVarients: dish.dishVarients,
             maxSelectOptions: dish.maxSelectOptions,
-            minSelectOptions: dish.minSelectOptions,
+            maxSelectVarient: dish.maxSelectVarient,
+            minSelectVarient: dish.minSelectVarient,
 
             addonId: addonDish.id,
             addonName: addonDish.name,
@@ -55,8 +57,10 @@ export async function GET() {
                         description: row.dishDescription,
                         imageUrl: row.dishImageUrl,
                         dishOptions: row.dishOptions,
+                        dishVarients: row.dishVarients,
                         maxSelectOptions: row.maxSelectOptions,
-                        minSelectOptions: row.minSelectOptions,
+                        maxSelectVarient: row.maxSelectVarient,
+                        minSelectVarient: row.minSelectVarient,
                         addons: [],
                     };
                 }

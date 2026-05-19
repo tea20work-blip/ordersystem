@@ -43,11 +43,13 @@ export const dish = pgTable("dish", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     dishOptions: jsonb("dish_options").array(),
+    dishVarients: jsonb("dish_varients").array(),
     isOutOfStock: boolean("is_out_of_stock").default(false),
     isHidden: boolean("is_hidden").default(false),
     isDeleted: boolean("is_deleted").default(false),
     maxSelectOptions: integer("max_select_options").default(1),
-    minSelectOptions: integer("min_select_options").default(0),
+    maxSelectVarient: integer("max_select_varient").default(1),
+    minSelectVarient: integer("min_select_varient").default(0),
 });
 
 export const table = pgTable("table", {

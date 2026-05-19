@@ -9,6 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import { getImageUrl } from "@/lib/s3";
 import { DishOptionsInput, DishOption } from "./DishOptionsInput";
+import { DishVarientsInput, DishVarient } from "./DishVarientsInput";
 import { revalidateTag } from "next/cache";
 
 export default async function DishFormPage({
@@ -64,10 +65,24 @@ export default async function DishFormPage({
             console.error("Failed to parse dish options", e);
         }
 
+        let dishVarients: DishVarient[] = [];
+        try {
+            const dishVarientsJson = formData.get("dishVarientsJson") as string;
+            if (dishVarientsJson) {
+                dishVarients = JSON.parse(dishVarientsJson);
+            }
+        } catch (e) {
+            console.error("Failed to parse dish variants", e);
+        }
+
+        const maxSelectOptions = parseInt(formData.get("maxSelectOptions") as string || "1", 10);
+        const maxSelectVarient = parseInt(formData.get("maxSelectVarient") as string || "1", 10);
+        const minSelectVarient = parseInt(formData.get("minSelectVarient") as string || "0", 10);
+
         if (isEdit && dishId) {
-            await updateDish(dishId, { name, price, description, imageUrl, categoryIds, addonIds, dishOptions, isOutOfStock, isHidden });
+            await updateDish(dishId, { name, price, description, imageUrl, categoryIds, addonIds, dishOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, isOutOfStock, isHidden });
         } else {
-            await createDish({ name, price, description, imageUrl, categoryIds, addonIds, dishOptions, isOutOfStock, isHidden });
+            await createDish({ name, price, description, imageUrl, categoryIds, addonIds, dishOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, isOutOfStock, isHidden });
         }
         revalidateTag("menu-data", "max");
 
@@ -215,6 +230,43 @@ export default async function DishFormPage({
 
                     <div className="pt-2">
                         <DishOptionsInput defaultValue={dishData?.dishOptions as DishOption[] | null} />
+                    </div>
+
+                    <div className="pt-2">
+                        <DishVarientsInput defaultValue={dishData?.dishVarients as DishVarient[] | null} />
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3 pt-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="maxSelectOptions">Max Select Options</Label>
+                            <Input
+                                id="maxSelectOptions"
+                                name="maxSelectOptions"
+                                type="number"
+                                min="1"
+                                defaultValue={dishData?.maxSelectOptions ?? 1}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="maxSelectVarient">Max Select Variant</Label>
+                            <Input
+                                id="maxSelectVarient"
+                                name="maxSelectVarient"
+                                type="number"
+                                min="1"
+                                defaultValue={dishData?.maxSelectVarient ?? 1}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="minSelectVarient">Min Select Variant</Label>
+                            <Input
+                                id="minSelectVarient"
+                                name="minSelectVarient"
+                                type="number"
+                                min="0"
+                                defaultValue={dishData?.minSelectVarient ?? 0}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-4 pt-4 border-t">

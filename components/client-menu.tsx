@@ -28,29 +28,31 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
     useEffect(() => {
         async function validateTable() {
             // Priority: Check URL query first, then fall back to store.
-            const currentCode = tableCodeQuery || tableCode;
-            if (currentCode) {
+
+            if (tableCodeQuery) {
                 //valideate qr code 
-                const res = await fetch(`/api/table/${currentCode}`, {
+                const res = await fetch(`/api/table/${tableCodeQuery}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ tableCode: currentCode }),
+                    body: JSON.stringify({ tableCode: tableCodeQuery }),
                 });
                 const isValideCode = await res.json();
                 if (!isValideCode) {
-                    router.push("/qr")
+                    router.push("/qr");
                 } else {
-                    setOrderType("dinein")
-                    setTableCode(currentCode);
+                    setTableCode(tableCodeQuery)
+                    setOrderType("dinein");
                 }
-            } else if (orderType !== "dineout") {
-                router.push("/qr")
+            } else {
+                setTableCode(undefined)
+                setOrderType("dineout")
             }
+
         }
         validateTable();
-    }, [orderType, tableCodeQuery, tableCode])
+    }, []);
 
     return (
         <>
@@ -76,7 +78,9 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
                     type="single"
                     value={orderType}
                     onValueChange={(value) => {
-                        if (value) setOrderType(value);
+                        if (value === "dinein") {
+                            router.push("/qr")
+                        }
                     }}
                 >
                     <ToggleGroupItem
@@ -95,6 +99,7 @@ export function ClientMenu({ initialDishes }: { initialDishes: any }) {
                         Takeaway
                     </ToggleGroupItem>
                 </ToggleGroup>
+                {tableCode && orderType === "dinein" && <p className=" mt-4 text-sm">Your selected table is : <span className=" font-bold">{tableCode}</span> </p>}
             </div>
 
             <main className=" w-full mx-auto py-8">

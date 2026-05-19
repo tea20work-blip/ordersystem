@@ -6,8 +6,8 @@ import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-// const BASE_URL = "http://192.168.1.10:3000"
-const BASE_URL = "https://t20-orders.vercel.app"
+const BASE_URL = "http://192.168.1.10:3000"
+// const BASE_URL = "https://t20-orders.vercel.app"
 
 export default function ScanQrPage() {
     const scannerRef = useRef<Html5Qrcode | null>(null);

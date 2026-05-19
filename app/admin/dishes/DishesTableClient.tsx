@@ -41,8 +41,10 @@ type Dish = {
   isOutOfStock: boolean | null;
   isHidden: boolean | null;
   isDeleted: boolean | null;
+  dishVarients: unknown | null;
   maxSelectOptions: number | null;
-  minSelectOptions: number | null;
+  maxSelectVarient: number | null;
+  minSelectVarient: number | null;
 };
 
 interface SortableTableRowProps {
