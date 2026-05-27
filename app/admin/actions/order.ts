@@ -133,6 +133,7 @@ export async function updateOrderAdvanced(orderId: number, data: {
     }
 
     revalidatePath("/admin/orders");
+    revalidatePath("/admin/tables");
 }
 
 export async function createAdminOrder(data: { tableId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, dishName?: string, dishImageUrl?: string, options?: any[] }[] }) {
@@ -158,6 +159,7 @@ export async function createAdminOrder(data: { tableId?: number | null, totalPri
     }
 
     revalidatePath("/admin/orders");
+    revalidatePath("/admin/tables");
 }
 
 export async function getRunningOrdersByTable(tableId: number) {

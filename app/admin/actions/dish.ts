@@ -128,5 +128,4 @@ export async function updateDishPriorities(updates: { id: number, priority: numb
     });
     revalidatePath("/admin/dishes");
     revalidateTag("menu-data", "max");
-
 }

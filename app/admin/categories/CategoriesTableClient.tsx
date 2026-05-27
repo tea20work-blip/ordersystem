@@ -135,6 +135,10 @@ export function CategoriesTableClient({ initialCategories }: CategoriesTableClie
     }
   }
 
+  if(isSaving){
+    <div>saving...</div>
+  }
+
   if (categories.length === 0) {
     return (
       <div className="rounded-md border bg-card text-card-foreground shadow-sm">

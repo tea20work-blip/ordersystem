@@ -8,11 +8,11 @@ import { Plus, Minus, Trash2, Search } from "lucide-react";
 import { createAdminOrder } from "../../actions/order";
 import { useRouter } from "next/navigation";
 
-export function OrderFormClient({ initialDishes, initialTables, defaultTableId = "" }: { initialDishes: any[], initialTables: any[], defaultTableId?: string }) {
+export function OrderFormClient({ initialDishes, initialTables, initialCegrates = [], defaultTableId = "" }: { initialDishes: any[], initialTables: any[], initialCegrates?: any[], defaultTableId?: string }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTable, setSelectedTable] = useState<string>(defaultTableId);
-    const [cart, setCart] = useState<{ dishId: number, name: string, price: number, quantity: number }[]>([]);
+    const [cart, setCart] = useState<{ id: string, dishId?: number, cegrateId?: number, name: string, price: number, quantity: number }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const filteredDishes = initialDishes.filter(dish =>
@@ -20,19 +20,31 @@ export function OrderFormClient({ initialDishes, initialTables, defaultTableId =
         (dish.description && dish.description.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    const addToCart = (dish: any) => {
+    const filteredCegrates = initialCegrates.filter(cegrate =>
+        cegrate.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const addToCart = (item: any, type: 'dish' | 'cegrate') => {
         setCart(prev => {
-            const existing = prev.find(item => item.dishId === dish.id);
+            const id = type === 'dish' ? `dish-${item.id}` : `cegrate-${item.id}`;
+            const existing = prev.find(c => c.id === id);
             if (existing) {
-                return prev.map(item => item.dishId === dish.id ? { ...item, quantity: item.quantity + 1 } : item);
+                return prev.map(c => c.id === id ? { ...c, quantity: c.quantity + 1 } : c);
             }
-            return [...prev, { dishId: dish.id, name: dish.name, price: dish.price, quantity: 1 }];
+            return [...prev, {
+                id,
+                dishId: type === 'dish' ? item.id : undefined,
+                cegrateId: type === 'cegrate' ? item.id : undefined,
+                name: item.name,
+                price: type === 'cegrate' ? item.amount : item.price,
+                quantity: 1
+            }];
         });
     };
 
-    const updateQuantity = (dishId: number, delta: number) => {
+    const updateQuantity = (id: string, delta: number) => {
         setCart(prev => prev.map(item => {
-            if (item.dishId === dishId) {
+            if (item.id === id) {
                 const newQuantity = Math.max(1, item.quantity + delta);
                 return { ...item, quantity: newQuantity };
             }
@@ -40,8 +52,8 @@ export function OrderFormClient({ initialDishes, initialTables, defaultTableId =
         }));
     };
 
-    const removeFromCart = (dishId: number) => {
-        setCart(prev => prev.filter(item => item.dishId !== dishId));
+    const removeFromCart = (id: string) => {
+        setCart(prev => prev.filter(item => item.id !== id));
     };
 
     const totalPricing = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -55,12 +67,13 @@ export function OrderFormClient({ initialDishes, initialTables, defaultTableId =
                 totalPricing,
                 items: cart.map(item => ({
                     dishId: item.dishId,
+                    cegrateId: item.cegrateId,
                     dishName: item.name,
                     quantity: item.quantity,
                     pricing: item.price
                 }))
             });
-            router.push("/admin/orders");
+            router.push("/admin/tables");
         } catch (error) {
             console.error(error);
             alert("Failed to create order");
@@ -82,12 +95,19 @@ export function OrderFormClient({ initialDishes, initialTables, defaultTableId =
                     />
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
-                    {filteredDishes.length === 0 ? (
-                        <p className="text-sm text-muted-foreground col-span-2 py-4">No dishes found.</p>
-                    ) : (
-                        filteredDishes.map(dish => (
-                            <div key={dish.id} className="flex border-b p-1 justify-between  overflow-y-auto">
+                <div className="grid sm:grid-cols-2 gap-4  pr-2">
+                    {filteredDishes.length === 0 && filteredCegrates.length === 0 && (
+                        <p className="text-sm text-muted-foreground col-span-2 py-4">No items found.</p>
+                    )}
+
+                    <div className=" h-screen overflow-y-auto">
+
+                        {filteredDishes.length > 0 && <div className="col-span-2 font-bold text-lg mt-2">Dishes</div>}
+                        {filteredDishes.sort(function (a, b) {
+                            return a.name - b.name;
+                        }
+                        ).map(dish => (
+                            <div key={`dish-${dish.id}`} className="flex border-b p-1 justify-between  overflow-y-auto">
                                 <div>
                                     <h3 className="font-semibold text-sm">{dish.name}</h3>
                                     {/* <p className="text-sm text-muted-foreground line-clamp-2">{dish.description}</p> */}
@@ -97,13 +117,35 @@ export function OrderFormClient({ initialDishes, initialTables, defaultTableId =
                                     className=" cursor-pointer"
                                     variant="secondary"
                                     size="xs"
-                                    onClick={() => addToCart(dish)}
+                                    onClick={() => addToCart(dish, 'dish')}
                                 >
                                     Add to Order
                                 </Button>
                             </div>
-                        ))
-                    )}
+                        ))}
+                    </div>
+
+                    <div className=" h-screen overflow-y-auto">
+
+
+                        {filteredCegrates.length > 0 && <div className="col-span-2 font-bold text-lg mt-2">Cigarettes</div>}
+                        {filteredCegrates.map(cegrate => (
+                            <div key={`cegrate-${cegrate.id}`} className="flex border-b p-1 justify-between  overflow-y-auto">
+                                <div>
+                                    <h3 className="font-semibold text-sm">{cegrate.name}</h3>
+                                    <p className="mt-2 font-medium text-xs">Rs. {cegrate.amount}</p>
+                                </div>
+                                <Button
+                                    className=" cursor-pointer"
+                                    variant="secondary"
+                                    size="xs"
+                                    onClick={() => addToCart(cegrate, 'cegrate')}
+                                >
+                                    Add to Order
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -133,22 +175,22 @@ export function OrderFormClient({ initialDishes, initialTables, defaultTableId =
                         ) : (
                             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                                 {cart.map(item => (
-                                    <div key={item.dishId} className="flex flex-col gap-2 p-2 border rounded bg-background">
+                                    <div key={item.id} className="flex flex-col gap-2 p-2 border rounded bg-background">
                                         <div className="flex justify-between items-start">
-                                            <span className="font-medium text-sm">{item.name}</span>
+                                            <span className="font-medium text-sm">{item.name} {item.cegrateId && <span className="text-[10px] text-muted-foreground">(Cigarette)</span>}</span>
                                             <span className="font-semibold text-sm">Rs. {item.price * item.quantity}</span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <div className="flex items-center gap-1 bg-muted rounded-md p-0.5">
-                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.dishId, -1)}>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, -1)}>
                                                     <Minus className="h-3 w-3" />
                                                 </Button>
                                                 <span className="text-xs font-medium w-6 text-center">{item.quantity}</span>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.dishId, 1)}>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, 1)}>
                                                     <Plus className="h-3 w-3" />
                                                 </Button>
                                             </div>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeFromCart(item.dishId)}>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeFromCart(item.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>

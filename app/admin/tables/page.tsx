@@ -36,8 +36,8 @@ export default async function TablesPage() {
                 </Button>
             </div>
 
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+            <div className="flex items-center justify-end">
+                {/* <h1 className="text-3xl font-bold tracking-tight">Orders</h1> */}
                 <Button asChild>
                     <Link href="/admin/orders/form">
                         <Plus className="h-4 w-4 mr-2" /> New Order

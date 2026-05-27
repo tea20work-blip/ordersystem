@@ -13,7 +13,7 @@ import { getUsers } from "../actions/user";
 import { Eye } from "lucide-react";
 import { getImageUrl } from "@/lib/s3";
 
-export function OrderDialogClient({ order }: { order: any }) {
+export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: () => void }) {
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -43,6 +43,7 @@ export function OrderDialogClient({ order }: { order: any }) {
                 lendingAmount: status === 'completed' ? calculatedLendingAmount : undefined,
             });
             setOpen(false);
+            if (onUpdate) onUpdate();
         } catch (err) {
             console.error(err);
         } finally {

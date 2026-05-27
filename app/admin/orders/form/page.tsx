@@ -1,5 +1,6 @@
 import { getDishes } from "../../actions/dish";
 import { getTables } from "../../actions/table";
+import { getCegrates } from "../../actions/cegrate";
 import { OrderFormClient } from "./OrderFormClient";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ export default async function OrderFormPage({
     const resolvedParams = await searchParams;
     const dishes = await getDishes();
     const tables = await getTables();
+    const cegrates = await getCegrates();
 
     return (
         <div className="space-y-6">
@@ -30,6 +32,7 @@ export default async function OrderFormPage({
             <OrderFormClient
                 initialDishes={dishes}
                 initialTables={tables}
+                initialCegrates={cegrates}
                 defaultTableId={resolvedParams.tableId || ""}
             />
         </div>

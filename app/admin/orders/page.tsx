@@ -50,9 +50,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                                     <TableCell>{order.tableName || "N/A"}</TableCell>
                                     <TableCell className="font-semibold">Rs. {order.totalPricing}</TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(order.status!) ? 'bg-green-100 text-green-800' :
+                                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                'bg-yellow-100 text-yellow-800'
                                             }`}>
                                             {order.status}
                                         </span>

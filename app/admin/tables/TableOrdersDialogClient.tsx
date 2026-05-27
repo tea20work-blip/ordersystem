@@ -32,6 +32,15 @@ export function TableOrdersDialogClient({ table }: { table: any }) {
         }
     };
 
+    const refreshOrders = async () => {
+        try {
+            const data = await getRunningOrdersByTable(table.id);
+            setOrders(data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     return (
         <>
             <div
@@ -91,7 +100,7 @@ export function TableOrdersDialogClient({ table }: { table: any }) {
                                             <TableCell>Rs. {o.totalPricing}</TableCell>
                                             <TableCell>{new Date(o.createdAt).toLocaleString()}</TableCell>
                                             <TableCell className="text-right">
-                                                <OrderDialogClient order={o} />
+                                                <OrderDialogClient order={o} onUpdate={refreshOrders} />
                                             </TableCell>
                                         </TableRow>
                                     ))}

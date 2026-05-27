@@ -152,6 +152,10 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
     }
   }
 
+  if (isSaving) {
+    return <div>Saving...</div>;
+  }
+
   if (dishes.length === 0) {
     return (
       <div className="rounded-md border bg-card text-card-foreground shadow-sm">
