@@ -10,6 +10,20 @@ import { cn } from "@/lib/utils";
 
 export default async function TablesPage() {
     const tables = await getTables();
+    const groupedTables = [
+        {
+            name: "A",
+            tables: tables.filter((t) => t.name.startsWith("A")),
+        },
+        {
+            name: "B",
+            tables: tables.filter((t) => t.name.startsWith("B")),
+        },
+        {
+            name: "C",
+            tables: tables.filter((t) => t.name.startsWith("C")),
+        },
+    ]
     // console.log(tables);
     return (
         <div className="space-y-6">
@@ -31,10 +45,19 @@ export default async function TablesPage() {
                 </Button>
             </div>
 
-            <div className=" w-full grid grid-cols-8 gap-5">
-                {tables.map((t) => (
-                    <div key={t.id} className={cn("rounded-md duration-200  cursor-pointer aspect-square border bg-card text-card-foreground shadow-sm")}>
-                        <TableOrdersDialogClient table={t} />
+            <div className=" w-full grid grid-cols-3 gap-10 ">
+                {groupedTables.map((group) => (
+                    <div key={group.name} className=" flex flex-col w-full gap-3">
+                        <p className="col-span-3">
+                            {group.name}
+                        </p>
+                        <div className=" grid grid-cols-3 gap-3">
+                            {group.tables.map((t) => (
+                                <div key={t.id} className={cn("rounded-md duration-200 aspect-square bg-card text-card-foreground shadow-sm overflow-hidden hover:shadow-md transition-shadow")}>
+                                    <TableOrdersDialogClient table={t} />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 ))}
             </div>

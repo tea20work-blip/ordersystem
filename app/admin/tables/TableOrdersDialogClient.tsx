@@ -12,6 +12,7 @@ import { OrderDialogClient } from "../orders/OrderDialogClient";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export function TableOrdersDialogClient({ table }: { table: any }) {
     const [open, setOpen] = useState(false);
@@ -34,11 +35,26 @@ export function TableOrdersDialogClient({ table }: { table: any }) {
     return (
         <>
             <div
-                onClick={handleOpen}
-                className="cursor-pointer w-full h-full relative  flex items-center justify-center hover:underline text-primary"
+                className="w-full h-full relative flex flex-col items-center justify-center group"
             >
-                {table.isRunning && <Badge className="absolute top-1 bg-green-700 text-white font-semibold right-1 text-xs">Running</Badge>}
-                {table.name}
+                {table.isRunning && <Badge className="absolute top-1 bg-green-700 text-white font-semibold right-1 text-xs z-10 pointer-events-none">Running</Badge>}
+                
+                <Link href={`/admin/orders/form?tableId=${table.id}`} className="flex-1 flex items-center justify-center w-full hover:underline text-primary font-bold text-2xl z-0">
+                    {table.name}
+                </Link>
+
+                <div className="pb-2 z-10">
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleOpen();
+                        }}
+                        className="bg-primary text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow-md hover:bg-primary/90 transition-colors"
+                    >
+                        View Orders
+                    </button>
+                </div>
             </div>
 
             <Dialog open={open} onOpenChange={setOpen}>

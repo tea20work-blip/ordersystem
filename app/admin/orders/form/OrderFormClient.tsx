@@ -8,10 +8,10 @@ import { Plus, Minus, Trash2, Search } from "lucide-react";
 import { createAdminOrder } from "../../actions/order";
 import { useRouter } from "next/navigation";
 
-export function OrderFormClient({ initialDishes, initialTables }: { initialDishes: any[], initialTables: any[] }) {
+export function OrderFormClient({ initialDishes, initialTables, defaultTableId = "" }: { initialDishes: any[], initialTables: any[], defaultTableId?: string }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedTable, setSelectedTable] = useState<string>("");
+    const [selectedTable, setSelectedTable] = useState<string>(defaultTableId);
     const [cart, setCart] = useState<{ dishId: number, name: string, price: number, quantity: number }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -55,6 +55,7 @@ export function OrderFormClient({ initialDishes, initialTables }: { initialDishe
                 totalPricing,
                 items: cart.map(item => ({
                     dishId: item.dishId,
+                    dishName: item.name,
                     quantity: item.quantity,
                     pricing: item.price
                 }))

@@ -135,7 +135,7 @@ export async function updateOrderAdvanced(orderId: number, data: {
     revalidatePath("/admin/orders");
 }
 
-export async function createAdminOrder(data: { tableId?: number | null, totalPricing: number, items: { dishId: number, quantity: number, pricing: number, options?: any[] }[] }) {
+export async function createAdminOrder(data: { tableId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, dishName?: string, dishImageUrl?: string, options?: any[] }[] }) {
     const [newOrder] = await db.insert(order).values({
         tableId: data.tableId || null,
         totalPricing: data.totalPricing,
@@ -147,9 +147,12 @@ export async function createAdminOrder(data: { tableId?: number | null, totalPri
             data.items.map(item => ({
                 orderId: newOrder.id,
                 dishId: item.dishId,
+                cegrateId: item.cegrateId,
                 quantity: item.quantity,
                 pricing: item.pricing,
                 options: item.options || [],
+                dishName: item.dishName || "",
+                dishImageUrl: item.dishImageUrl || "",
             }))
         );
     }

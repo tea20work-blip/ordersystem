@@ -95,7 +95,14 @@ export const order = pgTable("order", {
 export const orderItem = pgTable("order_item", {
     id: serial("id").primaryKey(),
     orderId: integer("order_id").notNull().references(() => order.id),
-    dishId: integer("dish_id").notNull().references(() => dish.id),
+    dishId: integer("dish_id").references(() => dish.id, {
+        onDelete: "set null",
+    }),
+    cegrateId: integer("cegrate_id").references(() => cegrates.id, {
+        onDelete: "set null",
+    }),
+    dishName: varchar("dish_name", { length: 255 }).notNull(),
+    dishImageUrl: varchar("dish_image_url", { length: 255 }),
     pricing: integer("pricing").notNull(),
     quantity: integer("quantity").notNull(),
     options: jsonb("options").array(),
@@ -116,3 +123,10 @@ export const recommendedDishes = pgTable("recommended_dishes", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const cegrates = pgTable("cegrates", {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    amount: integer("amount").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+})
