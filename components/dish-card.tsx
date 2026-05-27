@@ -34,14 +34,14 @@ export function DishCard({ dish }: { dish: any }) {
     const hasOptions = Array.isArray(dish.dishOptions) && dish.dishOptions.length > 0;
     const hasAddons = Array.isArray(dish.addons) && dish.addons.length > 0;
     const hasVariants = Array.isArray(dish.dishVarients) && dish.dishVarients.length > 0;
-    const isCustomizable = hasOptions || hasAddons || hasVariants;
+    const isCustomizable = hasOptions || hasVariants;
 
     useEffect(() => {
         console.log(selectedVariants)
     }, [selectedVariants])
 
     const handleAdd = () => {
-        if (isCustomizable) {
+        if (isCustomizable || hasAddons) {
             setSelectedOptions([]);
             setSelectedVariants(hasVariants ? [dish.dishVarients[0]] : []);
             setIsDrawerOpen(true);
@@ -51,7 +51,7 @@ export function DishCard({ dish }: { dish: any }) {
     };
 
     const handleIncrement = () => {
-        if (isCustomizable) {
+        if (isCustomizable || hasAddons) {
             setSelectedOptions([]);
             setSelectedVariants(hasVariants ? [dish.dishVarients[0]] : []);
             setIsDrawerOpen(true);
@@ -66,7 +66,7 @@ export function DishCard({ dish }: { dish: any }) {
     };
 
     const handleDecrement = () => {
-        if (isCustomizable) {
+        if (isCustomizable || hasAddons) {
             const lastItem = dishCartItems[dishCartItems.length - 1];
             if (lastItem) {
                 updateQuantity(lastItem.cartItemId, lastItem.quantity - 1);
@@ -151,7 +151,7 @@ export function DishCard({ dish }: { dish: any }) {
                                 <Button variant={"outline"} onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap px-4">
                                     Add
                                 </Button>
-                                {isCustomizable && <p className=" absolute -left-4 -bottom-4.5 font-semibold text-xs">CUSTOMIZABLE</p>}
+                                {(isCustomizable) && <p className=" absolute -left-4 -bottom-4.5 font-semibold text-xs">CUSTOMIZABLE</p>}
 
                             </div>
                         ) : (
@@ -291,7 +291,7 @@ export function DishCard({ dish }: { dish: any }) {
                             onClick={confirmAddOptions}
                             disabled={selectedVariants.length < (dish.minSelectVarient || 0)}
                         >
-                            Add to Cart - Rs. {(hasVariants && selectedVariants.length > 0 ? 0 : dish.price) + selectedOptions.reduce((sum, opt) => sum + opt.price, 0) + selectedVariants.reduce((sum, opt) => sum + opt.price, 0)}
+                            Add to Cart - Rs. {dish.price + selectedOptions.reduce((sum, opt) => sum + opt.price, 0) + selectedVariants.reduce((sum, opt) => sum + opt.price, 0) + selectedAddons.reduce((sum, opt) => sum + opt.price, 0)}
                         </Button>
                     </DrawerFooter>
 
