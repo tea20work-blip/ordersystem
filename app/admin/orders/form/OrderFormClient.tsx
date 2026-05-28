@@ -12,7 +12,7 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTable, setSelectedTable] = useState<string>(defaultTableId);
-    const [cart, setCart] = useState<{ id: string, dishId?: number, cegrateId?: number, name: string, price: number, quantity: number }[]>([]);
+    const [cart, setCart] = useState<{ id: string, dishId?: number, cegrateId?: number, name: string, price: number, quantity: number, imageUrl?: string }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const filteredDishes = initialDishes.filter(dish =>
@@ -37,7 +37,8 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                 cegrateId: type === 'cegrate' ? item.id : undefined,
                 name: item.name,
                 price: type === 'cegrate' ? item.amount : item.price,
-                quantity: 1
+                quantity: 1,
+                imageUrl: item.imageUrl
             }];
         });
     };
@@ -68,7 +69,8 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                 items: cart.map(item => ({
                     dishId: item.dishId,
                     cegrateId: item.cegrateId,
-                    dishName: item.name,
+                    name: item.name,
+                    imageUrl: item.imageUrl,
                     quantity: item.quantity,
                     pricing: item.price
                 }))

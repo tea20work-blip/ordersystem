@@ -45,13 +45,13 @@ export default async function TablesPage() {
                 </Button>
             </div>
 
-            <div className=" w-full grid grid-cols-3 gap-10 ">
+            <div className=" w-full flex flex-col gap-10 ">
                 {groupedTables.map((group) => (
                     <div key={group.name} className=" flex flex-col w-full gap-3">
                         <p className="col-span-3">
                             {group.name}
                         </p>
-                        <div className=" grid grid-cols-3 gap-3">
+                        <div className=" grid grid-cols-8 gap-3">
                             {group.tables.map((t) => (
                                 <div key={t.id} className={cn("rounded-md duration-200 aspect-square bg-card text-card-foreground shadow-sm overflow-hidden hover:shadow-md transition-shadow")}>
                                     <TableOrdersDialogClient table={t} />

@@ -43,12 +43,11 @@ export async function getOrderDetails(orderId: number) {
             id: orderItem.id,
             quantity: orderItem.quantity,
             pricing: orderItem.pricing,
-            dishName: dish.name,
-            imageUrl: dish.imageUrl,
+            dishName: orderItem.dishName,
+            imageUrl: orderItem.dishImageUrl,
             options: orderItem.options,
         })
         .from(orderItem)
-        .leftJoin(dish, eq(orderItem.dishId, dish.id))
         .where(eq(orderItem.orderId, orderId));
 
     return items;
@@ -136,7 +135,7 @@ export async function updateOrderAdvanced(orderId: number, data: {
     revalidatePath("/admin/tables");
 }
 
-export async function createAdminOrder(data: { tableId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, dishName?: string, dishImageUrl?: string, options?: any[] }[] }) {
+export async function createAdminOrder(data: { tableId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, name?: string, imageUrl?: string, options?: any[] }[] }) {
     const [newOrder] = await db.insert(order).values({
         tableId: data.tableId || null,
         totalPricing: data.totalPricing,
@@ -152,8 +151,8 @@ export async function createAdminOrder(data: { tableId?: number | null, totalPri
                 quantity: item.quantity,
                 pricing: item.pricing,
                 options: item.options || [],
-                dishName: item.dishName || "",
-                dishImageUrl: item.dishImageUrl || "",
+                dishName: item.name || "",
+                dishImageUrl: item.imageUrl || "",
             }))
         );
     }
