@@ -4,6 +4,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  min-width: 100%;
+  animation: marquee 12s linear infinite;
+}
+
 :root {
   --background: #f9f7f1;
   --foreground: #4a3f35;

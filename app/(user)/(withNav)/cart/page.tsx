@@ -13,14 +13,14 @@ import { cn } from "@/lib/utils";
 
 export default function CartPage() {
     const [mounted, setMounted] = useState(false);
-    const [isOrderDone, setIsOrderDone] = useState(false);
+    const [orderId, setOrderId] = useState<string | null>(null);
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsOrderDone(false);
-        }, 5000);
-        return () => clearTimeout(timer);
-    }, [isOrderDone])
+    // useEffect(() => {
+    //     const timer = setTimeout(() => {
+    //         setOrderId(null);
+    //     }, 5000);
+    //     return () => clearTimeout(timer);
+    // }, [orderId])
 
     const cartItems = useCartStore((state) => state.items);
     const updateQuantity = useCartStore((state) => state.updateQuantity);
@@ -36,14 +36,13 @@ export default function CartPage() {
     if (!mounted) return null; // Prevent hydration mismatch
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-background">
-            <Header />
+        <div className="min-h-[50vh] flex flex-col bg-slate-50/50 dark:bg-background">
 
             <main className="flex-1 container mx-auto px-4 py-8 max-w-5xl">
                 <h1 className=" text-xl md:text-3xl font-extrabold tracking-tight mb-8">Your Cart</h1>
 
                 {cartItems.length === 0 ? (
-                    <EmptyCart isOrderDone={isOrderDone} />
+                    <EmptyCart orderId={orderId} />
                 ) : (
                     <div className="grid  gap-8">
                         <div className=" space-y-4">
@@ -64,7 +63,7 @@ export default function CartPage() {
                                 </div>
                             </div>
                         </div>
-                        <OrderSummary setIsOrderDone={setIsOrderDone} totalAmount={totalAmount} cartItems={cartItems} clearCart={clearCart} tableCode={tableCode} />
+                        <OrderSummary setOrderId={setOrderId} totalAmount={totalAmount} cartItems={cartItems} clearCart={clearCart} tableCode={tableCode} />
 
                     </div>
                 )}
@@ -74,8 +73,9 @@ export default function CartPage() {
 }
 
 
-function OrderSummary({ totalAmount, cartItems, clearCart, setIsOrderDone, tableCode }: { totalAmount: number, cartItems: any[], clearCart: () => void, setIsOrderDone: (value: boolean) => void, tableCode?: string }) {
-    const GSTAmount = Number(totalAmount * 0.18).toFixed();
+function OrderSummary({ totalAmount, cartItems, clearCart, setOrderId, tableCode }: { totalAmount: number, cartItems: any[], clearCart: () => void, setOrderId: (value: string) => void, tableCode?: string }) {
+    // const GSTAmount = Number(totalAmount * 0.18).toFixed();
+    const GSTAmount = 0;
     const totalAmountWithGST = Number(totalAmount) + Number(GSTAmount);
     const [open, setOpen] = useState(false);
 
@@ -93,7 +93,7 @@ function OrderSummary({ totalAmount, cartItems, clearCart, setIsOrderDone, table
             });
             const result = await res.json();
             if (result.success) {
-                setIsOrderDone(true);
+                setOrderId(result.orderId);
                 toast.success("Order placed successfully!");
                 clearCart();
                 setOpen(false);
@@ -116,10 +116,10 @@ function OrderSummary({ totalAmount, cartItems, clearCart, setIsOrderDone, table
                         <span className="text-muted-foreground">Subtotal</span>
                         <span className="font-medium">Rs. {totalAmount}</span>
                     </div>
-                    <div className="flex justify-between">
+                    {/* <div className="flex justify-between">
                         <span className="text-muted-foreground">Taxes & Fees</span>
                         <span className="font-medium text-muted-foreground">Rs. {GSTAmount}</span>
-                    </div>
+                    </div> */}
                     <div className="pt-3 border-t flex justify-between items-center mt-3">
                         <span className="font-bold text-base">Total Amount</span>
                         <span className="font-extrabold text-2xl text-primary">Rs. {totalAmountWithGST}</span>
@@ -140,21 +140,24 @@ function OrderSummary({ totalAmount, cartItems, clearCart, setIsOrderDone, table
     )
 }
 
-function EmptyCart({ isOrderDone = true }: { isOrderDone: boolean }) {
+function EmptyCart({ orderId }: { orderId: string | null }) {
     return (
         <div className="text-center py-20 bg-card rounded-2xl border shadow-sm">
-            <div className={cn("mx-auto w-24 h-24  rounded-full flex items-center justify-center mb-6", isOrderDone ? " bg-primary/10" : "bg-muted")}>
+            <div className={cn("mx-auto w-24 h-24  rounded-full flex items-center justify-center mb-6", orderId ? " bg-primary/10" : "bg-muted")}>
                 <ShoppingBag className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">{isOrderDone ? "Ordered placed successfully" : "Your cart is empty"}</h2>
-            {!isOrderDone ? <>
+            <h2 className="text-2xl font-bold mb-2">{orderId ? "Ordered placed successfully" : "Your cart is empty"}</h2>
+            {!orderId ? <>
                 <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
                     Looks like you haven't added any delicious dishes to your cart yet.
                 </p>
                 <Button size="lg" asChild className="rounded-full">
                     <Link href="/">Place New Order</Link>
                 </Button>
-            </> : <p className=" mt-4">To know about your order, <br /> you can contact the counter person.</p>}
+            </> : <div className="flex flex-col items-center mt-4">
+                <p className="text-muted-foreground">To know about your order, you can contact the counter person.</p>
+                <Link href={`/orders?orderId=${orderId}`} className="text-primary font-semibold hover:underline">Click here to view your order</Link>
+            </div>}
         </div>
     )
 }

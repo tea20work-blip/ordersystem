@@ -1,7 +1,7 @@
 import { CartSnak } from "@/components/cartSnak";
 import { ClientMenu } from "@/components/client-menu";
 import { Header } from "@/components/header";
-import { getCachedMenu } from "../actions/home";
+import { getCachedMenu } from "../../actions/home";
 import Link from "next/link";
 import CategoryMenuSnack from "@/components/CategoryMenuSnack";
 import { Suspense } from "react";
@@ -13,7 +13,6 @@ export default async function Home() {
 
   return (
     <div className=" flex flex-col">
-      <Header />
       <Suspense>
         <ClientMenu initialDishes={data} />
       </Suspense>

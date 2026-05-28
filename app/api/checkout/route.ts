@@ -10,10 +10,11 @@ export async function POST(req: Request) {
 
         // 1. Check or insert table
         let tableId = null;
-        if (tableCode) {
-            let tableRecord = await db.select().from(table).where(eq(table.tableCode, tableCode)).limit(1);
-            if (tableRecord.length > 0) {
-                tableId = tableRecord[0].id;
+        if (!!tableCode) {
+            const [tableRecord] = await db.select({ id: table.id }).from(table).where(eq(table.tableCode, tableCode)).limit(1);
+            console.log({ tableRecord })
+            if (tableRecord) {
+                tableId = tableRecord.id;
             }
         }
 
@@ -39,10 +40,13 @@ export async function POST(req: Request) {
             const itemsToInsert = cartItems.map((item: any) => ({
                 orderId,
                 dishId: item.dish.id,
+                dishName: item.dish.name,
+                dishImageUrl: item.dish.imageUrl,
                 pricing: item.dish.price,
                 quantity: item.quantity,
                 options: item.selectedOptions || [],
             }));
+            console.log(itemsToInsert)
             await db.insert(orderItem).values(itemsToInsert);
         }
 

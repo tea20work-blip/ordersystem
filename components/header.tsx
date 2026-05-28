@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { ReceiptIndianRupeeIcon, ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -28,6 +28,11 @@ export function Header() {
                         <Link href="/admin">Admin</Link>
                     </Button> */}
 
+                    <Button variant="outline" size="icon" className="relative rounded-full" asChild>
+                        <Link href="/orders">
+                            <ReceiptIndianRupeeIcon className="h-4 w-4" />
+                        </Link>
+                    </Button>
                     <Button variant="outline" size="icon" className="relative rounded-full" asChild>
                         <Link href="/cart">
                             <ShoppingCart className="h-4 w-4" />
