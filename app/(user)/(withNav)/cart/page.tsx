@@ -35,6 +35,8 @@ export default function CartPage() {
 
     if (!mounted) return null; // Prevent hydration mismatch
 
+    console.log(cartItems)
+
     return (
         <div className="min-h-[50vh] flex flex-col bg-slate-50/50 dark:bg-background">
 

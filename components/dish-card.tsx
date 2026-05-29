@@ -80,7 +80,15 @@ export function DishCard({ dish }: { dish: any }) {
     };
 
     const confirmAddOptions = () => {
-        addItem(dish, [...selectedVariants, ...selectedOptions]);
+        console.log("options", selectedOptions)
+        console.log("variants", selectedVariants)
+        console.log("dish: ", dish)
+        if (selectedVariants && selectedVariants?.length > 0) {
+            console.log("in if cond")
+            addItem({ ...dish, price: selectedVariants[0].price }, [...selectedVariants.map((v: any) => ({ ...v, price: 0 })), ...selectedOptions]);
+        } else {
+            addItem(dish, [...selectedVariants, ...selectedOptions]);
+        }
         selectedAddons.forEach(option => addItem({ ...option }));
         setIsDrawerOpen(false);
     };
@@ -291,7 +299,7 @@ export function DishCard({ dish }: { dish: any }) {
                             onClick={confirmAddOptions}
                             disabled={selectedVariants.length < (dish.minSelectVarient || 0)}
                         >
-                            Add to Cart - Rs. {dish.price + selectedOptions.reduce((sum, opt) => sum + opt.price, 0) + selectedVariants.reduce((sum, opt) => sum + opt.price, 0) + selectedAddons.reduce((sum, opt) => sum + opt.price, 0)}
+                            Add to Cart - Rs. {(!selectedVariants.length ? dish.price : selectedVariants.reduce((sum, opt) => sum + opt.price, 0)) + selectedOptions.reduce((sum, opt) => sum + opt.price, 0) + + selectedAddons.reduce((sum, opt) => sum + opt.price, 0)}
                         </Button>
                     </DrawerFooter>
 

@@ -2,7 +2,7 @@
 
 import db from "@/db";
 import { order, user, table, orderItem, dish } from "@/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getOrders(page: number = 1, limit: number = 10) {
@@ -75,6 +75,8 @@ export async function updateOrderAdvanced(orderId: number, data: {
     }
     // Also if it's completed, it shouldn't be running anymore? The original code didn't force this, so I will leave it up to the user selection.
 
+    console.log(data);
+
     if (data.status === 'paid_user' && data.lendingUserId) {
         await db.transaction(async (tx) => {
             await tx.update(order)
@@ -82,7 +84,9 @@ export async function updateOrderAdvanced(orderId: number, data: {
                     status: data.status,
                     isRunning: finalIsRunning,
                     lendingUserId: data.lendingUserId,
-                    lendingAmount: data.totalPricing, // For backwards compatibility
+                    lendingAmount: data.totalPricing,
+                    paidOnline: data.paidOnline || 0,
+                    paidCash: data.paidCash || 0,
                 })
                 .where(eq(order.id, orderId));
 
@@ -124,9 +128,9 @@ export async function updateOrderAdvanced(orderId: number, data: {
                 status: data.status,
                 isRunning: finalIsRunning,
                 lendingUserId: data.lendingUserId || null,
-                paidOnline: data.paidOnline || 0,
-                paidCash: data.paidCash || 0,
-                lendingAmount: data.lendingAmount || 0,
+                paidOnline: data.status === "paid_online" ? data.totalPricing : 0,
+                paidCash: data.status === "paid_cash" ? data.totalPricing : 0,
+                lendingAmount: 0,
             })
             .where(eq(order.id, orderId));
     }
@@ -162,7 +166,7 @@ export async function createAdminOrder(data: { tableId?: number | null, totalPri
 }
 
 export async function getRunningOrdersByTable(tableId: number) {
-    return await db
+    const orders = await db
         .select({
             id: order.id,
             totalPricing: order.totalPricing,
@@ -181,4 +185,15 @@ export async function getRunningOrdersByTable(tableId: number) {
             sql`${order.tableId} = ${tableId} AND ${order.isRunning} = true`
         )
         .orderBy(desc(order.createdAt));
+
+    const orderIds = orders.map(o => o.id);
+    let items: (typeof orderItem.$inferSelect)[] = [];
+    if (orderIds.length > 0) {
+        items = await db.select().from(orderItem).where(inArray(orderItem.orderId, orderIds));
+    }
+
+    return orders.map(o => ({
+        ...o,
+        items: items.filter(i => i.orderId === o.id)
+    }));
 }

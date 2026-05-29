@@ -6,7 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getCegrates() {
-    return await db.select().from(cegrates).orderBy(desc(cegrates.createdAt));
+    return await db.select().from(cegrates).orderBy(desc(cegrates.amount));
 }
 
 export async function getCegrate(id: number) {
