@@ -5,9 +5,14 @@ import { getCachedMenu } from "../../actions/home";
 import Link from "next/link";
 import CategoryMenuSnack from "@/components/CategoryMenuSnack";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-export default async function Home() {
+export default async function Home({ params }: { params: { tableCode: string } }) {
+
+  const { tableCode } = await params
   const data = await getCachedMenu();
+
+  redirect("/qr")
 
   // console.log(data);
 
