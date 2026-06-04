@@ -1,12 +1,13 @@
 import { getTables } from "../actions/table";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
 import { TableOrdersDialogClient } from "./TableOrdersDialogClient";
-import { DeleteTableButton } from "@/components/delete-table-button";
 import { cn } from "@/lib/utils";
+
+export const dynamic = 'force-static'
+export const revalidate = 20;
+
 
 export default async function TablesPage() {
     const tables = await getTables();

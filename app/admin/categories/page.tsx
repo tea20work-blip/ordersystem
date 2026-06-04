@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CategoriesTableClient } from "./CategoriesTableClient";
 
+export const dynamic = 'force-static'
+export const revalidate = 20;
+
+
 export default async function CategoriesPage() {
     const categories = await getCategories();
 

@@ -75,4 +75,4 @@ export async function getTodayTopOrderedDishes(): Promise<TopOrderedDish[]> {
     }));
 }
 
-export const getTodayTopOrderedDishesCashed = unstable_cache(getTodayTopOrderedDishes, ["today-top-ordered-dishes"], { revalidate: 60, tags: ["today-top-ordered-dishes"] });
+export const getTodayTopOrderedDishesCashed = unstable_cache(getTodayTopOrderedDishes, ["today-top-ordered-dishes"], { revalidate: 20, tags: ["today-top-ordered-dishes"] });

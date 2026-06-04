@@ -2,6 +2,10 @@ import { getUsers } from "../actions/user";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UserTableRow } from "./user-table-row";
 
+export const dynamic = 'force-static'
+export const revalidate = 20;
+
+
 export default async function UsersPage() {
     const users = await getUsers();
 
