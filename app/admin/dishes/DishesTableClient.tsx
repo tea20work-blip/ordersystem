@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { DeleteDishButton } from "@/components/delete-dish-button";
 import { getImageUrl } from "@/lib/s3";
 import { updateDishPriorities } from "../actions/dish";
+import { Input } from "@/components/ui/input";
 
 type Dish = {
   id: number;
@@ -107,6 +108,12 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
   const [dishes, setDishes] = useState(initialDishes);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [searchDish, setSearchDish] = useState("");
+
+  const filteredDishes = dishes.filter((dish) =>
+    dish.name.toLowerCase().includes(searchDish.toLowerCase())
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -182,7 +189,17 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
     );
   }
 
-  return (
+  return (<>
+    <div className="mb-4">
+      <Input
+        placeholder="Search by name or category..."
+        value={searchDish}
+        onChange={(e) => setSearchDish(e.target.value)}
+        className="max-w-sm"
+      />
+    </div>
+
+
     <div className="rounded-md border bg-card text-card-foreground shadow-sm">
       <Table>
         <TableHeader>
@@ -202,10 +219,11 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={dishes.map((d) => d.id)}
+              disabled={searchDish !== ""}
+              items={filteredDishes.map((d) => d.id)}
               strategy={verticalListSortingStrategy}
             >
-              {dishes.map((dish) => (
+              {filteredDishes.map((dish) => (
                 <SortableTableRow key={dish.id} dish={dish} />
               ))}
             </SortableContext>
@@ -213,5 +231,8 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
         </TableBody>
       </Table>
     </div>
-  );
+
+  </>
+  )
+
 }

@@ -41,6 +41,7 @@ export function DishCard({ dish }: { dish: any }) {
     }, [selectedVariants])
 
     const handleAdd = () => {
+        console.log("Handle add fun")
         if (isCustomizable || hasAddons) {
             setSelectedOptions([]);
             setSelectedVariants(hasVariants ? [dish.dishVarients[0]] : []);
@@ -85,7 +86,7 @@ export function DishCard({ dish }: { dish: any }) {
         console.log("dish: ", dish)
         if (selectedVariants && selectedVariants?.length > 0) {
             console.log("in if cond")
-            addItem({ ...dish, price: selectedVariants[0].price }, [...selectedVariants.map((v: any) => ({ ...v, price: 0 })), ...selectedOptions]);
+            addItem({ ...dish, price: selectedVariants.reduce((acc: any, item: any) => acc + item.price, 0) }, [...selectedVariants.map((v: any) => ({ ...v, price: 0 })), ...selectedOptions]);
         } else {
             addItem(dish, [...selectedVariants, ...selectedOptions]);
         }
@@ -132,7 +133,9 @@ export function DishCard({ dish }: { dish: any }) {
                 <div className=" flex flex-col grow">
                     <h3 className="font-medium leading-tight tracking-tight mb-1">{dish.name}</h3>
                     <div className="flex items-center justify-between ">
-                        <span className=" text-sm font-medium">Rs.  {hasVariants ? dish.dishVarients[0].price : dish.price}</span>
+                        <span className=" text-sm font-medium">Rs.  {hasVariants ? dish.dishVarients
+                            .slice(0, dish.minSelectVarient | 1)
+                            .reduce((acc: number, item: any) => acc + item.price, 0) : dish.price}</span>
                     </div>
                     {dish.description && (
                         <p className="text-sm text-muted-foreground mt-2 line-clamp-2 mb-4 grow">
