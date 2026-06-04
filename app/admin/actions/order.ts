@@ -3,7 +3,7 @@
 import db from "@/db";
 import { order, user, table, orderItem, dish } from "@/db/schema";
 import { eq, desc, sql, inArray } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function getOrders(page: number = 1, limit: number = 10) {
     const offset = (page - 1) * limit;
@@ -137,6 +137,7 @@ export async function updateOrderAdvanced(orderId: number, data: {
 
     revalidatePath("/admin/orders");
     revalidatePath("/admin/tables");
+    revalidateTag("today-top-ordered-dishes", "max");
 }
 
 export async function createAdminOrder(data: { tableId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, name?: string, imageUrl?: string, options?: any[] }[] }) {

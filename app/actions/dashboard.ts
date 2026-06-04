@@ -1,6 +1,7 @@
 import db from "@/db";
 import { dish, order, orderItem } from "@/db/schema";
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 
 export type TopOrderedDish = {
     dishId: number | null;
@@ -73,3 +74,5 @@ export async function getTodayTopOrderedDishes(): Promise<TopOrderedDish[]> {
         totalPrice: Number(row.totalPrice),
     }));
 }
+
+export const getTodayTopOrderedDishesCashed = unstable_cache(getTodayTopOrderedDishes, ["today-top-ordered-dishes"], { revalidate: 60, tags: ["today-top-ordered-dishes"] });

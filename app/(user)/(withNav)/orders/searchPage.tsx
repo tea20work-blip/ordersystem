@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { fetchOrdersByMobileAction, fetchOrdersByOrderIdAction } from "./actions";
 import { Loader2 } from "lucide-react";
 import { Header } from "@/components/header";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export function OrdersPage() {
     const searchParams = useSearchParams();
-    const orderId = searchParams.get("orderId");
+    const router = useRouter();
+    var orderId = searchParams.get("orderId");
     const [mobile, setMobile] = useState("");
     const [loading, setLoading] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,6 +21,7 @@ export function OrdersPage() {
     const [searched, setSearched] = useState(false);
 
     const handleSearch = async (e: React.FormEvent) => {
+        orderId = null;
         e.preventDefault();
         if (!mobile) return;
         setLoading(true);
@@ -58,7 +60,7 @@ export function OrdersPage() {
     }, [orderId])
 
     return (
-        <div className=" px-4">
+        <div className=" px-4 pb-12">
             <h1 className="text-2xl font-bold mb-6 mt-6">Find Your Orders</h1>
             <form onSubmit={handleSearch} className="flex gap-4 mb-8">
                 <Input

@@ -1,9 +1,9 @@
 import { getImageUrl } from "@/lib/s3";
-import { getTodayTopOrderedDishes } from "../actions/dashboard";
+import { getTodayTopOrderedDishesCashed } from "../actions/dashboard";
 import AdminSummary from "./AdminSummary";
 
 export default async function AdminPage() {
-    const data = await getTodayTopOrderedDishes();
+    const data = await getTodayTopOrderedDishesCashed();
     const dishData = data.filter((item) => item.cegrateId === null);
     const cegrateData = data.filter((item) => item.cegrateId !== null);
     const totalDishRevenue = dishData.reduce((acc, item) => acc + item.totalPrice, 0);
