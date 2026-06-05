@@ -58,3 +58,12 @@ export async function payUserLending(userId: number, amount: number, paymentMeth
         return { success: true };
     });
 }
+
+export async function createUser(data: { name: string; number: string }) {
+    const newUser = await db.insert(user).values({
+        name: data.name,
+        number: data.number,
+        lendingAmount: 0,
+    }).returning();
+    return newUser[0];
+}

@@ -9,8 +9,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { getOrderDetails, updateOrderAdvanced } from "../actions/order";
-import { getUsers } from "../actions/user";
-import { Eye } from "lucide-react";
+import { getUsers, createUser } from "../actions/user";
+import { Eye, Plus } from "lucide-react";
 import { getImageUrl } from "@/lib/s3";
 
 export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: () => void }) {
@@ -25,6 +25,27 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
     const [paidOnline, setPaidOnline] = useState<number>(order.paidOnline || 0);
     const [paidCash, setPaidCash] = useState<number>(order.paidCash || 0);
     const [users, setUsers] = useState<any[]>([]);
+
+    const [isCreatingUser, setIsCreatingUser] = useState(false);
+    const [newUserName, setNewUserName] = useState("");
+    const [newUserNumber, setNewUserNumber] = useState("");
+
+    const handleCreateUser = async () => {
+        if (!newUserName.trim()) return;
+        setIsUpdating(true);
+        try {
+            const u = await createUser({ name: newUserName, number: newUserNumber });
+            setUsers(prev => [...prev, u]);
+            setLendingUserId(u.id.toString());
+            setIsCreatingUser(false);
+            setNewUserName("");
+            setNewUserNumber("");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
     const calculatedLendingAmount = Math.max(0, order.totalPricing - (paidOnline || 0) - (paidCash || 0));
 
@@ -137,18 +158,33 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                     </div>
 
                                     {status === 'paid_user' && (
-                                        <div className="flex items-center gap-4">
-                                            <span className="font-semibold text-muted-foreground w-20">Select User:</span>
-                                            <select
-                                                value={lendingUserId}
-                                                onChange={(e) => setLendingUserId(e.target.value)}
-                                                className="border rounded px-2 py-1 text-sm bg-background flex-1"
-                                            >
-                                                <option value="">-- Select a User --</option>
-                                                {users.map(u => (
-                                                    <option key={u.id} value={u.id}>{u.name || 'Unknown'} ({u.number})</option>
-                                                ))}
-                                            </select>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-4">
+                                                <span className="font-semibold text-muted-foreground w-20">Select User:</span>
+                                                <select
+                                                    value={lendingUserId}
+                                                    onChange={(e) => setLendingUserId(e.target.value)}
+                                                    className="border rounded px-2 py-1 text-sm bg-background flex-1"
+                                                >
+                                                    <option value="">-- Select a User --</option>
+                                                    {users.map(u => (
+                                                        <option key={u.id} value={u.id}>{u.name || 'Unknown'} ({u.number})</option>
+                                                    ))}
+                                                </select>
+                                                <Button variant="outline" size="sm" onClick={() => setIsCreatingUser(!isCreatingUser)}>
+                                                    <Plus className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            {isCreatingUser && (
+                                                <div className="flex flex-col gap-2 mt-2 p-3 border rounded bg-muted/20">
+                                                    <div className="text-sm font-semibold">Create New User</div>
+                                                    <div className="flex gap-2">
+                                                        <input type="text" placeholder="Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} className="border rounded px-2 py-1 text-sm flex-1 bg-background" />
+                                                        <input type="text" placeholder="Phone (Optional)" value={newUserNumber} onChange={e => setNewUserNumber(e.target.value)} className="border rounded px-2 py-1 text-sm flex-1 bg-background" />
+                                                        <Button size="sm" onClick={handleCreateUser} disabled={!newUserName.trim() || isUpdating}>Save</Button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -178,18 +214,33 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                             </div>
 
                                             {calculatedLendingAmount > 0 && (
-                                                <div className="flex items-center gap-4">
-                                                    <span className="font-semibold text-muted-foreground w-32 text-red-500">Select User (Req):</span>
-                                                    <select
-                                                        value={lendingUserId}
-                                                        onChange={(e) => setLendingUserId(e.target.value)}
-                                                        className="border rounded px-2 py-1 text-sm bg-background flex-1 border-red-300"
-                                                    >
-                                                        <option value="">-- Select a User --</option>
-                                                        {users.map(u => (
-                                                            <option key={u.id} value={u.id}>{u.name || 'Unknown'} ({u.number})</option>
-                                                        ))}
-                                                    </select>
+                                                <div className="flex flex-col gap-2 mt-2">
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="font-semibold text-muted-foreground w-32 text-red-500">Select User (Req):</span>
+                                                        <select
+                                                            value={lendingUserId}
+                                                            onChange={(e) => setLendingUserId(e.target.value)}
+                                                            className="border rounded px-2 py-1 text-sm bg-background flex-1 border-red-300"
+                                                        >
+                                                            <option value="">-- Select a User --</option>
+                                                            {users.map(u => (
+                                                                <option key={u.id} value={u.id}>{u.name || 'Unknown'} ({u.number})</option>
+                                                            ))}
+                                                        </select>
+                                                        <Button variant="outline" size="sm" onClick={() => setIsCreatingUser(!isCreatingUser)}>
+                                                            <Plus className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                    {isCreatingUser && (
+                                                        <div className="flex flex-col gap-2 p-3 border rounded bg-muted/20">
+                                                            <div className="text-sm font-semibold">Create New User</div>
+                                                            <div className="flex hidd gap-2 flex-col">
+                                                                <input type="text" placeholder="Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} className="border rounded px-2 py-1 text-sm flex-1 bg-background" />
+                                                                <input type="text" placeholder="Phone (Optional)" value={newUserNumber} onChange={e => setNewUserNumber(e.target.value)} className="border rounded px-2 py-1 text-sm flex-1 bg-background" />
+                                                                <Button size="sm" onClick={handleCreateUser} disabled={!newUserName.trim() || isUpdating}>Save</Button>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -208,7 +259,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                         </div>
                     </div>
 
-                    <div className="border rounded-md overflow-hidden">
+                    <div className="border max-h-[50vh] overflow-y-auto rounded-md">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-muted text-muted-foreground">
                                 <tr>
