@@ -137,6 +137,7 @@ export async function updateOrderAdvanced(orderId: number, data: {
 
     revalidatePath("/admin/orders");
     revalidatePath("/admin/tables");
+    revalidatePath("/admin/user");
     revalidateTag("today-top-ordered-dishes", "max");
 }
 

@@ -25,6 +25,7 @@ export function DishCard({ dish }: { dish: any }) {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
     const [selectedAddons, setSelectedAddons] = useState<SelectedOption[]>([]);
+    const [selectedStyles, setSelectedStyles] = useState<SelectedOption[]>([]);
     const [selectedVariants, setSelectedVariants] = useState<SelectedOption[]>(
         Array.isArray(dish.dishVarients) && dish.dishVarients.length > 0 ? [dish.dishVarients[0]] : []
     );
@@ -32,18 +33,20 @@ export function DishCard({ dish }: { dish: any }) {
     const dishCartItems = cartItems.filter((item) => item.dish.id === dish.id);
     const quantity = dishCartItems.reduce((sum, item) => sum + item.quantity, 0);
     const hasOptions = Array.isArray(dish.dishOptions) && dish.dishOptions.length > 0;
+    const hasStyles = Array.isArray(dish.styleOptions) && dish.styleOptions.length > 0;
     const hasAddons = Array.isArray(dish.addons) && dish.addons.length > 0;
     const hasVariants = Array.isArray(dish.dishVarients) && dish.dishVarients.length > 0;
-    const isCustomizable = hasOptions || hasVariants;
+    const isCustomizable = hasOptions || hasVariants || hasStyles;
 
     useEffect(() => {
-        console.log(selectedVariants)
+        console.log("dish bottom bar: ", dish)
     }, [selectedVariants])
 
     const handleAdd = () => {
         console.log("Handle add fun")
         if (isCustomizable || hasAddons) {
             setSelectedOptions([]);
+            setSelectedStyles([]);
             setSelectedVariants(hasVariants ? [dish.dishVarients[0]] : []);
             setIsDrawerOpen(true);
         } else {
@@ -54,6 +57,7 @@ export function DishCard({ dish }: { dish: any }) {
     const handleIncrement = () => {
         if (isCustomizable || hasAddons) {
             setSelectedOptions([]);
+            setSelectedStyles([]);
             setSelectedVariants(hasVariants ? [dish.dishVarients[0]] : []);
             setIsDrawerOpen(true);
         } else {
@@ -86,9 +90,9 @@ export function DishCard({ dish }: { dish: any }) {
         console.log("dish: ", dish)
         if (selectedVariants && selectedVariants?.length > 0) {
             console.log("in if cond")
-            addItem({ ...dish, price: selectedVariants.reduce((acc: any, item: any) => acc + item.price, 0) }, [...selectedVariants.map((v: any) => ({ ...v, price: 0 })), ...selectedOptions]);
+            addItem({ ...dish, price: selectedVariants.reduce((acc: any, item: any) => acc + item.price, 0) }, [...selectedVariants.map((v: any) => ({ ...v, price: 0 })), ...selectedOptions, ...selectedStyles]);
         } else {
-            addItem(dish, [...selectedVariants, ...selectedOptions]);
+            addItem(dish, [...selectedVariants, ...selectedOptions, ...selectedStyles]);
         }
         selectedAddons.forEach(option => addItem({ ...option }));
         setIsDrawerOpen(false);
@@ -96,9 +100,25 @@ export function DishCard({ dish }: { dish: any }) {
 
     const toggleOption = (option: any) => {
         setSelectedOptions(prev => {
+            const maxSelect = dish.maxSelectOptions || 1;
+
             const exists = prev.find(o => o.id === option.id);
             if (exists) return prev.filter(o => o.id !== option.id);
+
+            if (prev.length >= maxSelect) return prev;
             return [...prev, option];
+        });
+    };
+
+    const toggleStyle = (style: any) => {
+        setSelectedStyles(prev => {
+            const maxSelect = dish.maxStyleOptions || 1;
+
+            const exists = prev.find(s => s.id === style.id);
+            if (exists) return prev.filter(s => s.id !== style.id);
+
+            if (prev.length >= maxSelect) return prev;
+            return [...prev, style];
         });
     };
     const toggleAddons = (option: any) => {
@@ -265,6 +285,39 @@ export function DishCard({ dish }: { dish: any }) {
                                 </div>
                             </div>
                         )}
+                        {hasStyles && (
+                            <div className=" overflow-hidden pb-0 border rounded-lg border-dashed mb-6">
+                                <div className=" bg-gray-50 px-4 py-3 border-b border-dashed flex justify-between items-center">
+                                    <p className=" font-medium "> Style Options </p>
+                                    <span className="text-xs text-muted-foreground">
+                                        Select {dish.minStyleOptions > 0 ? `at least ${dish.minStyleOptions}` : "up to"} {dish.maxStyleOptions || 1}
+                                    </span>
+                                </div>
+                                <div className="">
+                                    {dish.styleOptions.map((style: any) => {
+                                        const isSelected = selectedStyles.some(s => s.id === style.id);
+                                        return (
+                                            <div
+                                                key={style.id}
+                                                className="flex items-center justify-between p-3  cursor-pointer hover:bg-muted/50"
+                                                onClick={() => toggleStyle(style)}
+                                            >
+                                                <span className=" text-sm  font-medium">{style.name}</span>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-muted-foreground">Rs. {style.price}</span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        readOnly
+                                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                         {hasAddons && (
                             <div className=" overflow-hidden pb-0 border rounded-lg border-dashed mb-6">
                                 <div className=" bg-gray-50 px-4 py-3 border-b border-dashed">
@@ -300,9 +353,9 @@ export function DishCard({ dish }: { dish: any }) {
                         <Button
                             className=" h-10"
                             onClick={confirmAddOptions}
-                            disabled={selectedVariants.length < (dish.minSelectVarient || 0)}
+                            disabled={selectedVariants.length < (dish.minSelectVarient || 0) || selectedStyles.length < (dish.minStyleOptions || 0)}
                         >
-                            Add to Cart - Rs. {(!selectedVariants.length ? dish.price : selectedVariants.reduce((sum, opt) => sum + opt.price, 0)) + selectedOptions.reduce((sum, opt) => sum + opt.price, 0) + + selectedAddons.reduce((sum, opt) => sum + opt.price, 0)}
+                            Add to Cart - Rs. {(!selectedVariants.length ? dish.price : selectedVariants.reduce((sum, opt) => sum + opt.price, 0)) + selectedOptions.reduce((sum, opt) => sum + opt.price, 0) + selectedStyles.reduce((sum, opt) => sum + opt.price, 0) + selectedAddons.reduce((sum, opt) => sum + opt.price, 0)}
                         </Button>
                     </DrawerFooter>
 

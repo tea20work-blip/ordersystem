@@ -1,0 +1,1 @@
+ALTER TABLE "dish" ADD COLUMN "style_options" jsonb[];

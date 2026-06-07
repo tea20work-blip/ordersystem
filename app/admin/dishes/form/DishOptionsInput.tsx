@@ -14,9 +14,11 @@ export type DishOption = {
 
 interface DishOptionsInputProps {
     defaultValue?: DishOption[] | null;
+    name?: string;
+    title?: string;
 }
 
-export function DishOptionsInput({ defaultValue }: DishOptionsInputProps) {
+export function DishOptionsInput({ defaultValue, name = "dishOptionsJson", title = "Dish Options (Add-ons)" }: DishOptionsInputProps) {
     const [options, setOptions] = useState<DishOption[]>(defaultValue || []);
 
     const addOption = () => {
@@ -41,10 +43,10 @@ export function DishOptionsInput({ defaultValue }: DishOptionsInputProps) {
 
     return (
         <div className="space-y-4">
-            <input type="hidden" name="dishOptionsJson" value={JSON.stringify(options)} />
+            <input type="hidden" name={name} value={JSON.stringify(options)} />
             
             <div className="flex items-center justify-between">
-                <Label>Dish Options (Add-ons)</Label>
+                <Label>{title}</Label>
                 <Button type="button" variant="outline" size="sm" onClick={addOption}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Option

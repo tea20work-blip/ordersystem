@@ -25,6 +25,9 @@ async function getMenu() {
             maxSelectVarient: dish.maxSelectVarient,
             minSelectVarient: dish.minSelectVarient,
             isOutOfStock: dish.isOutOfStock,
+            styleOptions: dish.styleOptions,
+            minStyleOptions: dish.minStyleOptions,
+            maxStyleOptions: dish.maxStyleOptions,
 
             dishPriority: dish.priority,
             categoryPriority: category.priority,
@@ -66,6 +69,9 @@ async function getMenu() {
                         maxSelectOptions: row.maxSelectOptions,
                         maxSelectVarient: row.maxSelectVarient,
                         minSelectVarient: row.minSelectVarient,
+                        styleOptions: row.styleOptions,
+                        minStyleOptions: row.minStyleOptions,
+                        maxStyleOptions: row.maxStyleOptions,
                         category: row.categoryName,
                         addons: [],
                     });

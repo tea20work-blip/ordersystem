@@ -35,17 +35,20 @@ export async function getDish(id: number) {
     };
 }
 
-export async function createDish(data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], dishVarients?: any[], maxSelectOptions?: number, maxSelectVarient?: number, minSelectVarient?: number, isOutOfStock?: boolean, isHidden?: boolean }) {
+export async function createDish(data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], styleOptions?: any[], dishVarients?: any[], maxSelectOptions?: number, maxSelectVarient?: number, minSelectVarient?: number, maxStyleOptions?: number, minStyleOptions?: number, isOutOfStock?: boolean, isHidden?: boolean }) {
     const [newDish] = await db.insert(dish).values({
         name: data.name,
         price: data.price,
         description: data.description,
         imageUrl: data.imageUrl,
         dishOptions: data.dishOptions || [],
+        styleOptions: data.styleOptions || [],
         dishVarients: data.dishVarients || [],
         maxSelectOptions: data.maxSelectOptions ?? 1,
         maxSelectVarient: data.maxSelectVarient ?? 1,
         minSelectVarient: data.minSelectVarient ?? 0,
+        maxStyleOptions: data.maxStyleOptions ?? 1,
+        minStyleOptions: data.minStyleOptions ?? 0,
         isOutOfStock: data.isOutOfStock || false,
         isHidden: data.isHidden || false,
     }).returning({ id: dish.id });
@@ -71,17 +74,20 @@ export async function createDish(data: { name: string; price: number; descriptio
     revalidatePath("/admin/dishes");
 }
 
-export async function updateDish(id: number, data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], dishVarients?: any[], maxSelectOptions?: number, maxSelectVarient?: number, minSelectVarient?: number, isOutOfStock?: boolean, isHidden?: boolean }) {
+export async function updateDish(id: number, data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], styleOptions?: any[], dishVarients?: any[], maxSelectOptions?: number, maxSelectVarient?: number, minSelectVarient?: number, maxStyleOptions?: number, minStyleOptions?: number, isOutOfStock?: boolean, isHidden?: boolean }) {
     await db.update(dish).set({
         name: data.name,
         price: data.price,
         description: data.description,
         imageUrl: data.imageUrl,
         dishOptions: data.dishOptions || [],
+        styleOptions: data.styleOptions || [],
         dishVarients: data.dishVarients || [],
         maxSelectOptions: data.maxSelectOptions ?? 1,
         maxSelectVarient: data.maxSelectVarient ?? 1,
         minSelectVarient: data.minSelectVarient ?? 0,
+        maxStyleOptions: data.maxStyleOptions ?? 1,
+        minStyleOptions: data.minStyleOptions ?? 0,
         isOutOfStock: data.isOutOfStock || false,
         isHidden: data.isHidden || false,
         updatedAt: new Date(),

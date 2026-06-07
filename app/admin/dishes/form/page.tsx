@@ -65,6 +65,16 @@ export default async function DishFormPage({
             console.error("Failed to parse dish options", e);
         }
 
+        let styleOptions: DishOption[] = [];
+        try {
+            const styleOptionsJson = formData.get("styleOptionsJson") as string;
+            if (styleOptionsJson) {
+                styleOptions = JSON.parse(styleOptionsJson);
+            }
+        } catch (e) {
+            console.error("Failed to parse style options", e);
+        }
+
         let dishVarients: DishVarient[] = [];
         try {
             const dishVarientsJson = formData.get("dishVarientsJson") as string;
@@ -78,11 +88,13 @@ export default async function DishFormPage({
         const maxSelectOptions = parseInt(formData.get("maxSelectOptions") as string || "1", 10);
         const maxSelectVarient = parseInt(formData.get("maxSelectVarient") as string || "1", 10);
         const minSelectVarient = parseInt(formData.get("minSelectVarient") as string || "0", 10);
+        const minStyleOptions = parseInt(formData.get("minStyleOptions") as string || "0", 10);
+        const maxStyleOptions = parseInt(formData.get("maxStyleOptions") as string || "1", 10);
 
         if (isEdit && dishId) {
-            await updateDish(dishId, { name, price, description, imageUrl, categoryIds, addonIds, dishOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, isOutOfStock, isHidden });
+            await updateDish(dishId, { name, price, description, imageUrl, categoryIds, addonIds, dishOptions, styleOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, minStyleOptions, maxStyleOptions, isOutOfStock, isHidden });
         } else {
-            await createDish({ name, price, description, imageUrl, categoryIds, addonIds, dishOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, isOutOfStock, isHidden });
+            await createDish({ name, price, description, imageUrl, categoryIds, addonIds, dishOptions, styleOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, minStyleOptions, maxStyleOptions, isOutOfStock, isHidden });
         }
         revalidateTag("menu-data", "max");
 
@@ -233,6 +245,10 @@ export default async function DishFormPage({
                     </div>
 
                     <div className="pt-2">
+                        <DishOptionsInput name="styleOptionsJson" title="Style Options" defaultValue={dishData?.styleOptions as DishOption[] | null} />
+                    </div>
+
+                    <div className="pt-2">
                         <DishVarientsInput defaultValue={dishData?.dishVarients as DishVarient[] | null} />
                     </div>
 
@@ -265,6 +281,26 @@ export default async function DishFormPage({
                                 type="number"
                                 min="0"
                                 defaultValue={dishData?.minSelectVarient ?? 0}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="maxStyleOptions">Max Style Options</Label>
+                            <Input
+                                id="maxStyleOptions"
+                                name="maxStyleOptions"
+                                type="number"
+                                min="1"
+                                defaultValue={dishData?.maxStyleOptions ?? 1}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="minStyleOptions">Min Style Options</Label>
+                            <Input
+                                id="minStyleOptions"
+                                name="minStyleOptions"
+                                type="number"
+                                min="0"
+                                defaultValue={dishData?.minStyleOptions ?? 0}
                             />
                         </div>
                     </div>

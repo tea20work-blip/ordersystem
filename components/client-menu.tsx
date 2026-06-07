@@ -18,7 +18,21 @@ export function ClientMenu({ initialDishes, currentTable }: { initialDishes: any
     };
 
     const filteredDishes = initialDishes.map((category: any) => {
-        return { ...category, dishes: category.dishes.filter((dish: any) => dish.name.toLowerCase().includes(searchQuery.toLowerCase()) || dish.category.toLowerCase().includes(searchQuery.toLowerCase()) || dish.description.toLowerCase().includes(searchQuery.toLowerCase())) }
+        if (!searchQuery.trim()) return category;
+        const searchWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+
+        const dishesWithScore = category.dishes.map((dish: any) => {
+            const targetText = `${dish.name || ''} ${dish.description || ''}`.toLowerCase();
+            const matchCount = searchWords.reduce((count, word) => count + (targetText.includes(word) ? 1 : 0), 0);
+            return { dish, matchCount };
+        }).filter((item: any) => item.matchCount > 0);
+
+        dishesWithScore.sort((a: any, b: any) => b.matchCount - a.matchCount);
+
+        return {
+            ...category,
+            dishes: dishesWithScore.map((item: any) => item.dish)
+        };
     });
 
     let dishCount = filteredDishes.reduce((acc: number, category: any) => acc + category.dishes.length, 0);

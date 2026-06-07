@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import db from "@/db";
 import { user, order, orderItem, table } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
     try {
@@ -61,6 +62,10 @@ export async function POST(req: Request) {
             console.log(itemsToInsert)
             await db.insert(orderItem).values(itemsToInsert);
         }
+
+        // 5. revalidate the cache
+        revalidatePath("/admin/tables");
+        revalidatePath("/admin/orders");
 
         return NextResponse.json({ success: true, orderId });
     } catch (error: any) {

@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Plus, Minus, Trash2, Search } from "lucide-react";
 import { createAdminOrder } from "../../actions/order";
 import { useRouter } from "next/navigation";
+import { AdminDishItem } from "./AdminDishItem";
 
 export function OrderFormClient({ initialDishes, initialTables, initialCegrates = [], defaultTableId = "" }: { initialDishes: any[], initialTables: any[], initialCegrates?: any[], defaultTableId?: string }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTable, setSelectedTable] = useState<string>(defaultTableId);
-    const [cart, setCart] = useState<{ id: string, dishId?: number, cegrateId?: number, name: string, price: number, quantity: number, imageUrl?: string }[]>([]);
+    const [cart, setCart] = useState<{ id: string, dishId?: number, cegrateId?: number, name: string, price: number, quantity: number, imageUrl?: string, options?: any[] }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const filteredDishes = initialDishes.filter(dish =>
@@ -24,9 +25,10 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
         cegrate.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const addToCart = (item: any, type: 'dish' | 'cegrate') => {
+    const addToCart = (item: any, type: 'dish' | 'cegrate', options: any[] = []) => {
         setCart(prev => {
-            const id = type === 'dish' ? `dish-${item.id}` : `cegrate-${item.id}`;
+            const sortedOptionIds = [...options].map(o => o.id).sort().join(',');
+            const id = type === 'dish' ? `dish-${item.id}${sortedOptionIds ? '-' + sortedOptionIds : ''}` : `cegrate-${item.id}`;
             const existing = prev.find(c => c.id === id);
             if (existing) {
                 return prev.map(c => c.id === id ? { ...c, quantity: c.quantity + 1 } : c);
@@ -38,7 +40,8 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                 name: item.name,
                 price: type === 'cegrate' ? item.amount : item.price,
                 quantity: 1,
-                imageUrl: item.imageUrl
+                imageUrl: item.imageUrl,
+                options
             }];
         });
     };
@@ -72,7 +75,8 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                     name: item.name,
                     imageUrl: item.imageUrl,
                     quantity: item.quantity,
-                    pricing: item.price
+                    pricing: item.price,
+                    options: item.options
                 }))
             });
             router.push("/admin/tables");
@@ -106,24 +110,10 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
 
                         {filteredDishes.length > 0 && <div className="col-span-2 font-bold text-lg mt-2">Dishes</div>}
                         {filteredDishes.sort(function (a, b) {
-                            return a.name - b.name;
+                            return a.name.localeCompare(b.name);
                         }
                         ).map(dish => (
-                            <div key={`dish-${dish.id}`} className="flex border-b p-1 justify-between  overflow-y-auto">
-                                <div>
-                                    <h3 className="font-semibold text-sm">{dish.name}</h3>
-                                    {/* <p className="text-sm text-muted-foreground line-clamp-2">{dish.description}</p> */}
-                                    <p className="mt-2 font-medium text-xs">Rs. {dish.price}</p>
-                                </div>
-                                <Button
-                                    className=" cursor-pointer"
-                                    variant="secondary"
-                                    size="xs"
-                                    onClick={() => addToCart(dish, 'dish')}
-                                >
-                                    Add to Order
-                                </Button>
-                            </div>
+                            <AdminDishItem key={`dish-${dish.id}`} dish={dish} onAddToCart={(item, options) => addToCart(item, 'dish', options)} />
                         ))}
                     </div>
 
@@ -179,7 +169,16 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                                 {cart.map(item => (
                                     <div key={item.id} className="flex flex-col gap-2 p-2 border rounded bg-background">
                                         <div className="flex justify-between items-start">
-                                            <span className="font-medium text-sm">{item.name} {item.cegrateId && <span className="text-[10px] text-muted-foreground">(Cigarette)</span>}</span>
+                                            <span className="font-medium text-sm">
+                                                {item.name} {item.cegrateId && <span className="text-[10px] text-muted-foreground">(Cigarette)</span>}
+                                                {item.options && item.options.length > 0 && (
+                                                    <div className="text-xs text-muted-foreground font-normal mt-1 flex flex-col gap-0.5">
+                                                        {item.options.map(opt => (
+                                                            <span key={opt.id}>+ {opt.name}</span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </span>
                                             <span className="font-semibold text-sm">Rs. {item.price * item.quantity}</span>
                                         </div>
                                         <div className="flex justify-between items-center">
