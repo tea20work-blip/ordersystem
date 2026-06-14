@@ -1,0 +1,2 @@
+CREATE TYPE "public"."order_delivery_status" AS ENUM('ordered', 'ready', 'dispatched', 'delivered');--> statement-breakpoint
+ALTER TABLE "order" ADD COLUMN "delivery_status" "order_delivery_status" DEFAULT 'ordered';

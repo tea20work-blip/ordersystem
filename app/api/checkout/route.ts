@@ -8,12 +8,10 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { name, mobile, email, tableCode, message, cartItems, totalPricing } = body;
-        console.log({ tableCode })
         // 1. Check or insert table
         let tableId = null;
         if (!!tableCode) {
             const [tableRecord] = await db.select({ id: table.id }).from(table).where(eq(table.name, tableCode)).limit(1);
-            console.log({ tableRecord })
             if (tableRecord) {
                 tableId = tableRecord.id;
             }
@@ -59,7 +57,6 @@ export async function POST(req: Request) {
                 quantity: item.quantity,
                 options: item.selectedOptions || [],
             }));
-            console.log(itemsToInsert)
             await db.insert(orderItem).values(itemsToInsert);
         }
 

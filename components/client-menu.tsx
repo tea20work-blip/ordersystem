@@ -64,7 +64,7 @@ export function ClientMenu({ initialDishes, currentTable }: { initialDishes: any
                         <Search className="h-4 w-4 text-muted-foreground" />
                     </InputGroupAddon>
                     <InputGroupAddon align="inline-end">{dishCount} results</InputGroupAddon>
-                    {searchQuery.trim() !== "" && <InputGroupAddon align="inline-end"><X onClick={() => setSearchQuery("")} className="h-4 w-4 text-muted-foreground" /></InputGroupAddon>}
+                    {searchQuery.trim() !== "" && <InputGroupAddon className=" cursor-pointer" align="inline-end"><X onClick={() => setSearchQuery("")} className="h-4 w-4 text-muted-foreground" /></InputGroupAddon>}
 
                 </InputGroup>
 
@@ -100,7 +100,7 @@ export function ClientMenu({ initialDishes, currentTable }: { initialDishes: any
                 {tableCode && orderType === "dinein" && <p className=" mt-4 text-sm">Your selected table is : <span className=" font-bold">{tableCode}</span> </p>}
             </div>
 
-            <main className=" w-full mx-auto py-8">
+            <main className="w-full mx-auto py-8">
                 <div className="mb-8 px-4">
                     <h1 className=" text-2xl md:text-4xl font-extrabold tracking-tight mb-2">Our Menu</h1>
                     <p className="text-muted-foreground text-lg">Discover our delicious offerings and order right away.</p>

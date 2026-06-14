@@ -66,6 +66,7 @@ async function getMenu() {
                         imageUrl: row.dishImageUrl,
                         dishOptions: row.dishOptions,
                         dishVarients: row.dishVarients,
+                        isOutOfStock: row.isOutOfStock,
                         maxSelectOptions: row.maxSelectOptions,
                         maxSelectVarient: row.maxSelectVarient,
                         minSelectVarient: row.minSelectVarient,

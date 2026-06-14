@@ -127,6 +127,20 @@
       "when": 1780858386649,
       "tag": "0017_thin_quasimodo",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1781361538677,
+      "tag": "0018_great_veda",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1781428637290,
+      "tag": "0019_bright_franklin_richards",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { TableOrdersDialogClient } from "./TableOrdersDialogClient";
 import { cn } from "@/lib/utils";
+import AutoRefresh from "@/components/AutoRefresh";
 
 export const dynamic = 'force-static'
 export const revalidate = 20;
@@ -14,20 +15,25 @@ export default async function TablesPage() {
     const groupedTables = [
         {
             name: "A",
-            tables: tables.filter((t) => t.name.startsWith("A")),
+            tables: tables.filter((t) => ["A1", "A2", "A3", "A4", "A5", "A6", "A7"].includes(t.name)),
         },
         {
             name: "B",
-            tables: tables.filter((t) => t.name.startsWith("B")),
+            tables: tables.filter((t) => ["B1", "B2", "B3", "B4", "B5", "B6"].includes(t.name)),
         },
         {
             name: "C",
-            tables: tables.filter((t) => t.name.startsWith("C")),
+            tables: tables.filter((t) => ["C1", "C2"].includes(t.name)),
         },
+        {
+            name: "Temporary",
+            tables: tables.filter((t) => !["A1", "A2", "A3", "A4", "A5", "A6", "A7", "B1", "B2", "B3", "B4", "B5", "B6", "C1", "C2"].includes(t.name)),
+        }
     ]
-    // console.log(tables);
     return (
         <div className="space-y-6">
+            <AutoRefresh interval={10000} />
+
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Tables</h1>
                 <Button asChild>
@@ -48,7 +54,7 @@ export default async function TablesPage() {
 
             <div className=" w-full flex flex-col gap-10 ">
                 {groupedTables.map((group) => (
-                    <div key={group.name} className=" flex flex-col w-full gap-3">
+                    <div key={group.name} className="flex flex-col w-full gap-3">
                         <p className="col-span-3">
                             {group.name}
                         </p>

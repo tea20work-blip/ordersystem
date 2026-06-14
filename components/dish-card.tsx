@@ -15,6 +15,7 @@ import {
     DrawerTitle,
 } from "@/components/ui/drawer";
 import { ButtonGroup } from "./ui/button-group";
+import { cn } from "@/lib/utils";
 
 export function DishCard({ dish }: { dish: any }) {
     const cartItems = useCartStore((state) => state.items);
@@ -38,12 +39,9 @@ export function DishCard({ dish }: { dish: any }) {
     const hasVariants = Array.isArray(dish.dishVarients) && dish.dishVarients.length > 0;
     const isCustomizable = hasOptions || hasVariants || hasStyles;
 
-    useEffect(() => {
-        console.log("dish bottom bar: ", dish)
-    }, [selectedVariants])
+
 
     const handleAdd = () => {
-        console.log("Handle add fun")
         if (isCustomizable || hasAddons) {
             setSelectedOptions([]);
             setSelectedStyles([]);
@@ -85,11 +83,8 @@ export function DishCard({ dish }: { dish: any }) {
     };
 
     const confirmAddOptions = () => {
-        console.log("options", selectedOptions)
-        console.log("variants", selectedVariants)
-        console.log("dish: ", dish)
+
         if (selectedVariants && selectedVariants?.length > 0) {
-            console.log("in if cond")
             addItem({ ...dish, price: selectedVariants.reduce((acc: any, item: any) => acc + item.price, 0) }, [...selectedVariants.map((v: any) => ({ ...v, price: 0 })), ...selectedOptions, ...selectedStyles]);
         } else {
             addItem(dish, [...selectedVariants, ...selectedOptions, ...selectedStyles]);
@@ -149,11 +144,26 @@ export function DishCard({ dish }: { dish: any }) {
 
     return (
         <>
-            <div className=" border-b py-6 w-full items-center flex group hover:shadow-md px-4 transition-all duration-300">
+            {dish.isOutOfStock && <div className=" relative">
+                <div className="absolute flex top-3 right-7 z-10">
+                    <div style={{
+                        width: 0,
+                        height: 0,
+                        borderTop: " 12px solid transparent",
+                        borderRight: "6px solid #483839",
+                        borderBottom: "0px solid transparent"
+                    }} className=" w-0 h-0 border-primary" ></div>
+
+                    <div className=" rounded-b-xl py-2 text-xs font-semibold shadow px-1 bg-[#e85d04] text-white ">
+                        Out of stock
+                    </div>
+                </div>
+            </div>}
+            <div className={cn("border-b py-6 w-full items-center flex group hover:shadow-md px-4 transition-all duration-300", dish.isOutOfStock && "grayscale cursor-not-allowed")}>
                 <div className=" flex flex-col grow">
-                    <h3 className="font-medium leading-tight tracking-tight mb-1">{dish.name}</h3>
+                    <h3 className=" tracking-tight mb-1 font-semibold">{dish.name}</h3>
                     <div className="flex items-center justify-between ">
-                        <span className=" text-sm font-medium">Rs.  {hasVariants ? dish.dishVarients
+                        <span className=" text-sm font-semibold">₹  {hasVariants ? dish.dishVarients
                             .slice(0, dish.minSelectVarient | 1)
                             .reduce((acc: number, item: any) => acc + item.price, 0) : dish.price}</span>
                     </div>
@@ -176,14 +186,13 @@ export function DishCard({ dish }: { dish: any }) {
                         <></>
                     )}
 
-                    <div className=" absolute -bottom-1 left-1/2 -translate-x-1/2 z-10">
+                    <div className={cn(" absolute -bottom-1 left-1/2 -translate-x-1/2 z-10")}>
                         {quantity === 0 ? (
                             <div className=" flex gap-1 flex-col">
-                                <Button variant={"outline"} onClick={handleAdd} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap px-4">
+                                <Button variant={"outline"} onClick={handleAdd} disabled={dish.isOutOfStock} size="sm" className="rounded-full shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap px-4">
                                     Add
                                 </Button>
                                 {(isCustomizable) && <p className=" absolute -left-4 -bottom-4.5 font-semibold text-xs">CUSTOMIZABLE</p>}
-
                             </div>
                         ) : (
                             <div className="flex items-center bg-secondary rounded-full overflow-hidden shadow-sm border border-border/50">
@@ -241,7 +250,7 @@ export function DishCard({ dish }: { dish: any }) {
                                             >
                                                 <span className=" text-sm  font-medium">{variant.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-muted-foreground">Rs. {variant.price}</span>
+                                                    <span className="text-muted-foreground">₹ {variant.price}</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
@@ -271,7 +280,7 @@ export function DishCard({ dish }: { dish: any }) {
                                             >
                                                 <span className=" text-sm  font-medium">{option.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-muted-foreground">Rs. {option.price}</span>
+                                                    <span className="text-muted-foreground">₹ {option.price}</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
@@ -304,7 +313,7 @@ export function DishCard({ dish }: { dish: any }) {
                                             >
                                                 <span className=" text-sm  font-medium">{style.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-muted-foreground">Rs. {style.price}</span>
+                                                    <span className="text-muted-foreground">₹ {style.price}</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
@@ -334,7 +343,7 @@ export function DishCard({ dish }: { dish: any }) {
                                             >
                                                 <span className=" text-sm  font-medium">{option.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-muted-foreground">Rs. {option.price}</span>
+                                                    <span className="text-muted-foreground">₹ {option.price}</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
@@ -351,11 +360,11 @@ export function DishCard({ dish }: { dish: any }) {
                     </div>
                     <DrawerFooter>
                         <Button
-                            className=" h-10"
+                            className=" h-10 font-semibold"
                             onClick={confirmAddOptions}
                             disabled={selectedVariants.length < (dish.minSelectVarient || 0) || selectedStyles.length < (dish.minStyleOptions || 0)}
                         >
-                            Add to Cart - Rs. {(!selectedVariants.length ? dish.price : selectedVariants.reduce((sum, opt) => sum + opt.price, 0)) + selectedOptions.reduce((sum, opt) => sum + opt.price, 0) + selectedStyles.reduce((sum, opt) => sum + opt.price, 0) + selectedAddons.reduce((sum, opt) => sum + opt.price, 0)}
+                            Add to Cart - ₹ {(!selectedVariants.length ? dish.price : selectedVariants.reduce((sum, opt) => sum + opt.price, 0)) + selectedOptions.reduce((sum, opt) => sum + opt.price, 0) + selectedStyles.reduce((sum, opt) => sum + opt.price, 0) + selectedAddons.reduce((sum, opt) => sum + opt.price, 0)}
                         </Button>
                     </DrawerFooter>
 

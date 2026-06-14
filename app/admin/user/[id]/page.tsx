@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PayLendingDialog } from "./pay-lending-dialog";
+import { ArrowLeft } from "lucide-react";
 
 export default async function UserDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -22,13 +23,13 @@ export default async function UserDetailsPage({ params }: { params: Promise<{ id
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <div className="mb-6 flex items-center justify-between">
-                <div>
+                <Link href="/admin/user" className="text-sm flex gap-1 justify-center items-center hover:underline">
+                    <ArrowLeft size={16} /> Back to Users
+                </Link>
+                <div className=" text-right flex items-end flex-col">
                     <h1 className="text-2xl font-bold">{user.name || "Unknown User"}</h1>
                     <p className="text-gray-500 mt-1">{user.number || "No number provided"}</p>
                 </div>
-                <Link href="/admin/user" className="text-sm text-blue-600 hover:underline">
-                    &larr; Back to Users
-                </Link>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">

@@ -84,7 +84,7 @@ function SortableTableRow({ dish }: SortableTableRowProps) {
         )}
       </TableCell>
       <TableCell>{dish.name}</TableCell>
-      <TableCell>Rs. {dish.price}</TableCell>
+      <TableCell>₹ {dish.price}</TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
           <Button variant="outline" size="icon" asChild>

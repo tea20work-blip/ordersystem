@@ -8,10 +8,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { getOrderDetails, updateOrderAdvanced } from "../actions/order";
+import { getOrderDetails, updateOrderAdvanced, updateOrderItemsList } from "../actions/order";
 import { getUsers, createUser } from "../actions/user";
-import { Eye, Plus } from "lucide-react";
+import { getTables } from "../actions/table";
+import { getDishes } from "../actions/dish";
+import { getCegrates } from "../actions/cegrate";
+import { Eye, Plus, Minus, Trash2, Search } from "lucide-react";
 import { getImageUrl } from "@/lib/s3";
+import { z } from "zod";
+import { userDetailsSchema } from "@/zod/userDetailsSchema";
 
 export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: () => void }) {
     const [open, setOpen] = useState(false);
@@ -25,13 +30,44 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
     const [paidOnline, setPaidOnline] = useState<number>(order.paidOnline || 0);
     const [paidCash, setPaidCash] = useState<number>(order.paidCash || 0);
     const [users, setUsers] = useState<any[]>([]);
+    const [tables, setTables] = useState<any[]>([]);
+    const [selectedTableId, setSelectedTableId] = useState<string>(order.tableId ? order.tableId.toString() : "");
 
     const [isCreatingUser, setIsCreatingUser] = useState(false);
     const [newUserName, setNewUserName] = useState("");
     const [newUserNumber, setNewUserNumber] = useState("");
+    const [createUserErrors, setCreateUserErrors] = useState<{ name?: string, mobile?: string }>({});
 
+    const [isAddingItem, setIsAddingItem] = useState(false);
+    const [dishes, setDishes] = useState<any[]>([]);
+    const [cegrates, setCegrates] = useState<any[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const calculatedTotalPricing = items.reduce((acc, item) => acc + (item.pricing * item.quantity), 0);
+    const calculatedLendingAmount = Math.max(0, calculatedTotalPricing - (paidOnline || 0) - (paidCash || 0));
+
+    const isAlreadyPaid = ['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(order.status);
     const handleCreateUser = async () => {
-        if (!newUserName.trim()) return;
+        setCreateUserErrors({});
+        const schemaToUse = z.object({
+            name: userDetailsSchema.shape.name,
+            mobile: newUserNumber.trim() === "" ? z.string().optional() : userDetailsSchema.shape.mobile,
+        });
+
+        const validation = schemaToUse.safeParse({
+            name: newUserName,
+            mobile: newUserNumber.trim() === "" ? undefined : newUserNumber,
+        });
+
+        if (!validation.success) {
+            const errors = validation.error.flatten().fieldErrors;
+            setCreateUserErrors({
+                name: errors.name?.[0],
+                mobile: errors.mobile?.[0],
+            });
+            return;
+        }
+
         setIsUpdating(true);
         try {
             const u = await createUser({ name: newUserName, number: newUserNumber });
@@ -47,21 +83,20 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
         }
     };
 
-    const calculatedLendingAmount = Math.max(0, order.totalPricing - (paidOnline || 0) - (paidCash || 0));
-
-    const isAlreadyPaid = ['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(order.status);
-
     const handleSave = async () => {
         setIsUpdating(true);
         try {
+            await updateOrderItemsList(order.id, items);
+
             await updateOrderAdvanced(order.id, {
                 status: status as any,
                 isRunning,
                 lendingUserId: lendingUserId ? parseInt(lendingUserId) : null,
-                totalPricing: order.totalPricing,
+                totalPricing: calculatedTotalPricing,
                 paidOnline,
                 paidCash,
                 lendingAmount: status === 'completed' ? calculatedLendingAmount : undefined,
+                tableId: selectedTableId ? parseInt(selectedTableId) : null,
             });
             setOpen(false);
             if (onUpdate) onUpdate();
@@ -74,19 +109,30 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
 
     const handleOpen = async () => {
         setOpen(true);
-        if (items.length === 0) {
-            setLoading(true);
-            try {
-                const details = await getOrderDetails(order.id);
-                setItems(details);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
+        // Reset state back to initial order prop values in case of discarded changes
+        setStatus(order.status);
+        setIsRunning(order.isRunning);
+        setLendingUserId(order.lendingUserId ? order.lendingUserId.toString() : "");
+        setPaidOnline(order.paidOnline || 0);
+        setPaidCash(order.paidCash || 0);
+        setSelectedTableId(order.tableId ? order.tableId.toString() : "");
+        setIsAddingItem(false);
+        setSearchQuery("");
+
+        setLoading(true);
+        try {
+            const details = await getOrderDetails(order.id);
+            setItems(details);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
         if (users.length === 0) {
             getUsers().then(setUsers).catch(console.error);
+        }
+        if (tables.length === 0) {
+            getTables().then(setTables).catch(console.error);
         }
     };
 
@@ -109,11 +155,29 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                         <div>
                             <span className="font-semibold text-muted-foreground">Phone:</span> {order.userNumber || "N/A"}
                         </div>
-                        <div>
-                            <span className="font-semibold text-muted-foreground">Table:</span> {order.tableName || "N/A"}
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-muted-foreground">Table:</span>
+                            {isAlreadyPaid ? (
+                                <span>{order.tableName || "N/A"}</span>
+                            ) : (
+                                <select
+                                    value={selectedTableId}
+                                    onChange={(e) => setSelectedTableId(e.target.value)}
+                                    className="border rounded px-2 py-1 text-sm bg-background flex-1"
+                                >
+                                    <option value="">-- No Table --</option>
+                                    {tables.map(t => (
+                                        <option key={t.id} value={t.id}>{t.name}</option>
+                                    ))}
+                                    {/* Include current table if it's not in the fetched list somehow */}
+                                    {order.tableId && !tables.find(t => t.id === order.tableId) && (
+                                        <option value={order.tableId}>{order.tableName}</option>
+                                    )}
+                                </select>
+                            )}
                         </div>
                         <div>
-                            <span className="font-semibold text-muted-foreground">Total:</span> Rs. {order.totalPricing}
+                            <span className="font-semibold text-muted-foreground">Total:</span> ₹ {calculatedTotalPricing}
                         </div>
                         <div className="flex flex-col gap-3 col-span-2 border p-3 rounded bg-muted/30">
                             {isAlreadyPaid ? (
@@ -179,9 +243,17 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                                 <div className="flex flex-col gap-2 mt-2 p-3 border rounded bg-muted/20">
                                                     <div className="text-sm font-semibold">Create New User</div>
                                                     <div className="flex gap-2">
-                                                        <input type="text" placeholder="Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} className="border rounded px-2 py-1 text-sm flex-1 bg-background" />
-                                                        <input type="text" placeholder="Phone (Optional)" value={newUserNumber} onChange={e => setNewUserNumber(e.target.value)} className="border rounded px-2 py-1 text-sm flex-1 bg-background" />
-                                                        <Button size="sm" onClick={handleCreateUser} disabled={!newUserName.trim() || isUpdating}>Save</Button>
+                                                        <div className="flex-1 flex flex-col gap-1">
+                                                            <input type="text" placeholder="Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} className={`border rounded px-2 py-1 text-sm bg-background ${createUserErrors.name ? 'border-red-500' : ''}`} />
+                                                            {createUserErrors.name && <span className="text-xs text-red-500">{createUserErrors.name}</span>}
+                                                        </div>
+                                                        <div className="flex-1 flex flex-col gap-1">
+                                                            <input type="text" placeholder="Phone (Optional)" value={newUserNumber} onChange={e => setNewUserNumber(e.target.value)} className={`border rounded px-2 py-1 text-sm bg-background ${createUserErrors.mobile ? 'border-red-500' : ''}`} />
+                                                            {createUserErrors.mobile && <span className="text-xs text-red-500">{createUserErrors.mobile}</span>}
+                                                        </div>
+                                                        <div className="flex items-start">
+                                                            <Button size="sm" onClick={handleCreateUser} disabled={isUpdating}>Save</Button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}
@@ -210,13 +282,13 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <span className="font-semibold text-muted-foreground w-32">Lending Amount:</span>
-                                                <span className="font-semibold">Rs. {calculatedLendingAmount}</span>
+                                                <span className="font-semibold">₹ {calculatedLendingAmount}</span>
                                             </div>
 
                                             {calculatedLendingAmount > 0 && (
                                                 <div className="flex flex-col gap-2 mt-2">
                                                     <div className="flex items-center gap-4">
-                                                        <span className="font-semibold text-muted-foreground w-32 text-red-500">Select User (Req):</span>
+                                                        <span className="font-semibold w-32 text-red-500">Select User (Req):</span>
                                                         <select
                                                             value={lendingUserId}
                                                             onChange={(e) => setLendingUserId(e.target.value)}
@@ -234,10 +306,16 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                                     {isCreatingUser && (
                                                         <div className="flex flex-col gap-2 p-3 border rounded bg-muted/20">
                                                             <div className="text-sm font-semibold">Create New User</div>
-                                                            <div className="flex hidd gap-2 flex-col">
-                                                                <input type="text" placeholder="Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} className="border rounded px-2 py-1 text-sm flex-1 bg-background" />
-                                                                <input type="text" placeholder="Phone (Optional)" value={newUserNumber} onChange={e => setNewUserNumber(e.target.value)} className="border rounded px-2 py-1 text-sm flex-1 bg-background" />
-                                                                <Button size="sm" onClick={handleCreateUser} disabled={!newUserName.trim() || isUpdating}>Save</Button>
+                                                            <div className="flex gap-2 flex-col">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <input type="text" placeholder="Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} className={`border rounded px-2 py-1 text-sm bg-background ${createUserErrors.name ? 'border-red-500' : ''}`} />
+                                                                    {createUserErrors.name && <span className="text-xs text-red-500">{createUserErrors.name}</span>}
+                                                                </div>
+                                                                <div className="flex flex-col gap-1">
+                                                                    <input type="text" placeholder="Phone (Optional)" value={newUserNumber} onChange={e => setNewUserNumber(e.target.value)} className={`border rounded px-2 py-1 text-sm bg-background ${createUserErrors.mobile ? 'border-red-500' : ''}`} />
+                                                                    {createUserErrors.mobile && <span className="text-xs text-red-500">{createUserErrors.mobile}</span>}
+                                                                </div>
+                                                                <Button size="sm" onClick={handleCreateUser} disabled={isUpdating}>Save</Button>
                                                             </div>
                                                         </div>
                                                     )}
@@ -280,7 +358,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                         <td colSpan={5} className="p-6 text-center text-muted-foreground">No items found for this order.</td>
                                     </tr>
                                 ) : (
-                                    items.map((item) => (
+                                    items.map((item, idx) => (
                                         <tr key={item.id} className="bg-card">
                                             <td className="p-3">
                                                 {item.imageUrl ? (
@@ -290,15 +368,110 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                                 )}
                                             </td>
                                             <td className="p-3 font-medium">{item.dishName} {item?.options?.map((option: any) => `(${option.name})`).join(", ")}</td>
-                                            <td className="p-3">Rs. {item.pricing}</td>
-                                            <td className="p-3">{item.quantity}</td>
-                                            <td className="p-3 text-right font-semibold">Rs. {item.pricing * item.quantity}</td>
+                                            <td className="p-3">₹ {item.pricing}</td>
+                                            <td className="p-3">
+                                                {isAlreadyPaid ? (
+                                                    item.quantity
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => {
+                                                            setItems(prev => prev.map((i, index) => index === idx ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i));
+                                                        }}>
+                                                            <Minus className="h-3 w-3" />
+                                                        </Button>
+                                                        <span className="w-4 text-center">{item.quantity}</span>
+                                                        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => {
+                                                            setItems(prev => prev.map((i, index) => index === idx ? { ...i, quantity: i.quantity + 1 } : i));
+                                                        }}>
+                                                            <Plus className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="p-3 text-right font-semibold">
+                                                <div className="flex items-center justify-end gap-3">
+                                                    ₹ {item.pricing * item.quantity}
+                                                    {!isAlreadyPaid && (
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => {
+                                                            setItems(prev => prev.filter((_, index) => index !== idx));
+                                                        }}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))
                                 )}
                             </tbody>
                         </table>
                     </div>
+
+                    {!isAlreadyPaid && (
+                        <div className="mt-4 border-t pt-4">
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-semibold">Add Items</h3>
+                                <Button size="sm" variant="outline" onClick={() => {
+                                    setIsAddingItem(!isAddingItem);
+                                    if (!isAddingItem && dishes.length === 0) {
+                                        getDishes().then(setDishes).catch(console.error);
+                                        getCegrates().then(setCegrates).catch(console.error);
+                                    }
+                                }}>
+                                    {isAddingItem ? "Close" : "Browse Menu"}
+                                </Button>
+                            </div>
+                            
+                            {isAddingItem && (
+                                <div className="space-y-4 border p-3 rounded-md bg-muted/20">
+                                    <div className="relative">
+                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search dishes or cigarettes..."
+                                            value={searchQuery}
+                                            onChange={e => setSearchQuery(e.target.value)}
+                                            className="w-full border rounded-md pl-8 pr-3 py-2 text-sm bg-background"
+                                        />
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto space-y-2">
+                                        {dishes.filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase())).map(dish => (
+                                            <div key={`d-${dish.id}`} className="flex items-center justify-between p-2 bg-background border rounded text-sm">
+                                                <div>
+                                                    <span className="font-medium">{dish.name}</span> <span className="text-muted-foreground text-xs">₹{dish.price}</span>
+                                                </div>
+                                                <Button size="sm" variant="secondary" onClick={() => {
+                                                    setItems(prev => {
+                                                        const exists = prev.find(i => i.dishId === dish.id);
+                                                        if (exists) {
+                                                            return prev.map(i => i.id === exists.id ? { ...i, quantity: i.quantity + 1 } : i);
+                                                        }
+                                                        return [...prev, { id: Math.random(), dishId: dish.id, dishName: dish.name, pricing: dish.price, quantity: 1, imageUrl: dish.imageUrl, options: [] }];
+                                                    });
+                                                }}>Add</Button>
+                                            </div>
+                                        ))}
+                                        {cegrates.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(ceg => (
+                                            <div key={`c-${ceg.id}`} className="flex items-center justify-between p-2 bg-background border rounded text-sm">
+                                                <div>
+                                                    <span className="font-medium">{ceg.name}</span> <span className="text-muted-foreground text-xs">₹{ceg.amount} (Cigarette)</span>
+                                                </div>
+                                                <Button size="sm" variant="secondary" onClick={() => {
+                                                    setItems(prev => {
+                                                        const exists = prev.find(i => i.cegrateId === ceg.id);
+                                                        if (exists) {
+                                                            return prev.map(i => i.id === exists.id ? { ...i, quantity: i.quantity + 1 } : i);
+                                                        }
+                                                        return [...prev, { id: Math.random(), cegrateId: ceg.id, dishName: ceg.name, pricing: ceg.amount, quantity: 1, options: [] }];
+                                                    });
+                                                }}>Add</Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
         </>

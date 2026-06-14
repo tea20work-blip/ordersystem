@@ -33,7 +33,6 @@ export async function GET() {
         .leftJoin(dish, eq(dishCategory.dishId, dish.id))
         .leftJoin(addons, eq(dish.id, addons.dishId))
         .leftJoin(addonDish, eq(addons.addOnId, addonDish.id));
-    // console.log(data);
 
 
     const grouped = Object.values(
@@ -81,12 +80,5 @@ export async function GET() {
         ...cat,
         dishes: Object.values(cat.dishes),
     }));
-
-    // console.log("groupud")
-    // console.log("groupud")
-    // console.log("groupud")
-    // // console.log(JSON.stringify(grouped))
-
-
     return NextResponse.json({ data: grouped, status: 200 });
 }

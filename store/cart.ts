@@ -43,8 +43,6 @@ export const useCartStore = create<CartState>()(
                 const currentItems = get().items;
                 const sortedOptionIds = [...selectedOptions].map(o => o.id).sort().join(',');
                 const cartItemId = `${dish.id}${sortedOptionIds ? '-' + sortedOptionIds : ''}`;
-                console.log(dish, "dish");
-                console.log(selectedOptions, "selectedOptions");
                 const existingItem = currentItems.find(item => item.cartItemId === cartItemId);
 
                 if (existingItem) {

@@ -15,7 +15,7 @@ export default async function AdminPage() {
             <AdminSummary />
             <div className=" flex gap-4 justify-between">
                 <h1 className="text-2xl font-bold mb-6">Today's Ordered Dishes</h1>
-                <p className="text-lg">Rs. {totalDishRevenue} / - </p>
+                <p className="text-lg">₹ {totalDishRevenue} / - </p>
             </div>
             <div className="overflow-x-auto bg-white border border-gray-200 shadow-sm rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -52,7 +52,7 @@ export default async function AdminPage() {
             </div>
             <div className=" flex gap-4 mt-10 justify-between">
                 <h1 className="text-2xl font-bold mb-6">Today's Ordered Cigrates</h1>
-                <p className="text-lg">Rs. {totalCegrateRevenue} / -</p>
+                <p className="text-lg">₹ {totalCegrateRevenue} / -</p>
             </div>
             <div className="overflow-x-auto bg-white border border-gray-200 shadow-sm rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">

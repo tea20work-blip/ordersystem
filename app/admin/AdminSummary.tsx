@@ -23,7 +23,7 @@ function AdminSummaryCard({ title, amount }: { title: string, amount: number }) 
     return (
         <Card className=' bg-white'>
             <CardHeader className='text-2xl font-bold'>{title}</CardHeader>
-            <CardContent className='text-lg'>Rs. {amount} / -</CardContent>
+            <CardContent className='text-lg'>₹ {amount} / -</CardContent>
         </Card>
     )
 }

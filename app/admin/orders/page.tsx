@@ -1,9 +1,11 @@
 import { getOrders } from "../actions/order";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OrderDialogClient } from "./OrderDialogClient";
+import { DeliveryStatusSelect } from "./DeliveryStatusSelect";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import AutoRefresh from "@/components/AutoRefresh";
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
     const params = await searchParams;
@@ -14,8 +16,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
     return (
         <div className="space-y-6">
-
-
+            <AutoRefresh interval={10000} />
             <div className="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden">
                 <Table>
                     <TableHeader>
@@ -24,8 +25,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                             <TableHead>Date</TableHead>
                             <TableHead>Customer</TableHead>
                             <TableHead>Table</TableHead>
-                            <TableHead>Total (Rs)</TableHead>
+                            <TableHead>Total (₹)</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Delivery Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -48,7 +50,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                                         </div>
                                     </TableCell>
                                     <TableCell>{order.tableName || "N/A"}</TableCell>
-                                    <TableCell className="font-semibold">Rs. {order.totalPricing}</TableCell>
+                                    <TableCell className="font-semibold">₹ {order.totalPricing}</TableCell>
                                     <TableCell>
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(order.status!) ? 'bg-green-100 text-green-800' :
                                             order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
@@ -56,6 +58,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                                             }`}>
                                             {order.status}
                                         </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <DeliveryStatusSelect orderId={order.id} initialStatus={order.deliveryStatus || 'ordered'} />
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <OrderDialogClient order={order} />

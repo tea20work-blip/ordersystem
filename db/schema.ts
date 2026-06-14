@@ -24,12 +24,18 @@ export const cigarette = pgTable("cigarette", {
 
 export const cigaretteOrders = pgTable("cigarette_orders", {
     id: serial("id").primaryKey(),
-    cigaretteId: integer("cigarette_id").notNull().references(() => cigarette.id),
+    cigaretteId: integer("cigarette_id").notNull().references(() => cigarette.id, {
+        onDelete: "set null"
+    }),
     quantity: integer("quantity").notNull(),
     price: integer("price").notNull(),
-    tableId: integer("table_id").references(() => table.id),
+    tableId: integer("table_id").references(() => table.id, {
+        onDelete: "set null"
+    }),
     status: orderStatus("status").default("pending"),
-    userId: integer("user_id").references(() => user.id),
+    userId: integer("user_id").references(() => user.id, {
+        onDelete: "set null"
+    }),
     createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -73,16 +79,24 @@ export const category = pgTable("category", {
 
 export const dishCategory = pgTable("dish_category", {
     id: serial("id").primaryKey(),
-    dishId: integer("dish_id").notNull().references(() => dish.id),
-    categoryId: integer("category_id").notNull().references(() => category.id),
+    dishId: integer("dish_id").notNull().references(() => dish.id, {
+        onDelete: "cascade"
+    }),
+    categoryId: integer("category_id").notNull().references(() => category.id, {
+        onDelete: "cascade"
+    }),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const orderDeliveryStatus = pgEnum("order_delivery_status", ["ordered", "ready", "dispatched", "delivered"]);
+
 
 export const order = pgTable("order", {
     id: serial("id").primaryKey(),
-    tableId: integer("table_id").references(() => table.id),
+    tableId: integer("table_id").references(() => table.id, {
+        onDelete: "set null"
+    }),
     isRunning: boolean("is_running").default(true),
     userId: integer("user_id").references(() => user.id),
     totalPricing: integer("total_pricing").notNull(),
@@ -90,7 +104,10 @@ export const order = pgTable("order", {
     paidCash: integer("paid_cash").default(0),
     lendingAmount: integer("lending_amount").default(0),
     status: orderStatus("status").default("pending"),
-    lendingUserId: integer("lending_user_id").references(() => user.id),
+    deliveryStatus: orderDeliveryStatus("delivery_status").default("ordered"),
+    lendingUserId: integer("lending_user_id").references(() => user.id, {
+        onDelete: "set null"
+    }),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     message: varchar("message", { length: 255 }),
@@ -98,7 +115,9 @@ export const order = pgTable("order", {
 
 export const orderItem = pgTable("order_item", {
     id: serial("id").primaryKey(),
-    orderId: integer("order_id").notNull().references(() => order.id),
+    orderId: integer("order_id").notNull().references(() => order.id, {
+        onDelete: "cascade"
+    }),
     dishId: integer("dish_id").references(() => dish.id, {
         onDelete: "set null",
     }),
@@ -115,15 +134,21 @@ export const orderItem = pgTable("order_item", {
 });
 
 export const addons = pgTable("addons", {
-    dishId: integer("dish_id").notNull().references(() => dish.id),
-    addOnId: integer("add_on_id").notNull().references(() => dish.id),
+    dishId: integer("dish_id").notNull().references(() => dish.id, {
+        onDelete: "cascade"
+    }),
+    addOnId: integer("add_on_id").notNull().references(() => dish.id, {
+        onDelete: "cascade"
+    }),
 }, (table) => [
     primaryKey({ columns: [table.dishId, table.addOnId] })
 ]);
 
 export const recommendedDishes = pgTable("recommended_dishes", {
     id: serial("id").primaryKey(),
-    dishId: integer("dish_id").notNull().references(() => dish.id),
+    dishId: integer("dish_id").notNull().references(() => dish.id, {
+        onDelete: "cascade"
+    }),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });

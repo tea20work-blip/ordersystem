@@ -56,7 +56,7 @@ export default async function CegrateFormPage({
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="amount">Price (Rs.)</Label>
+                        <Label htmlFor="amount">Price (₹)</Label>
                         <Input
                             id="amount"
                             name="amount"

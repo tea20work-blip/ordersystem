@@ -40,18 +40,18 @@ export function AdminDishItem({ dish, onAddToCart }: { dish: any, onAddToCart: (
 
     const confirmAddOptions = () => {
         const optionsToPass = [...selectedVariants, ...selectedOptions, ...selectedStyles];
-        let price = dish.price;
+        let price = dish.price + selectedOptions.reduce((acc: any, item: any) => acc + item.price, 0) + selectedStyles.reduce((acc: any, item: any) => acc + item.price, 0) + selectedAddons.reduce((acc: any, item: any) => acc + item.price, 0);
         if (selectedVariants && selectedVariants.length > 0) {
             price = selectedVariants.reduce((acc: any, item: any) => acc + item.price, 0);
         }
-        
+
         const finalDish = { ...dish, price };
         onAddToCart(finalDish, optionsToPass);
-        
+
         selectedAddons.forEach(option => {
             onAddToCart({ ...option, id: `addon-${option.id}` }, []);
         });
-        
+
         setIsDrawerOpen(false);
     };
 
@@ -99,7 +99,7 @@ export function AdminDishItem({ dish, onAddToCart }: { dish: any, onAddToCart: (
             <div className="flex border-b p-1 justify-between overflow-y-auto">
                 <div>
                     <h3 className="font-semibold text-sm">{dish.name}</h3>
-                    <p className="mt-2 font-medium text-xs">Rs. {hasVariants ? dish.dishVarients
+                    <p className="mt-2 font-medium text-xs">₹ {hasVariants ? dish.dishVarients
                         .slice(0, dish.minSelectVarient | 1)
                         .reduce((acc: number, item: any) => acc + item.price, 0) : dish.price}</p>
                 </div>
@@ -116,7 +116,7 @@ export function AdminDishItem({ dish, onAddToCart }: { dish: any, onAddToCart: (
             </div>
 
             <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-                <DrawerContent className="data-[vaul-drawer-direction=bottom]:max-h-[80vh] z-[999] max-w-lg w-full mx-auto">
+                <DrawerContent className="data-[vaul-drawer-direction=bottom]:max-h-[80vh] z-999 max-w-lg w-full mx-auto">
                     <DrawerHeader>
                         <DrawerTitle>Customize {dish.name}</DrawerTitle>
                         <DrawerDescription>Select additional options for your dish.</DrawerDescription>
@@ -141,7 +141,7 @@ export function AdminDishItem({ dish, onAddToCart }: { dish: any, onAddToCart: (
                                             >
                                                 <span className="text-sm font-medium">{variant.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-muted-foreground">Rs. {variant.price}</span>
+                                                    <span className="text-muted-foreground">₹ {variant.price}</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
@@ -174,7 +174,7 @@ export function AdminDishItem({ dish, onAddToCart }: { dish: any, onAddToCart: (
                                             >
                                                 <span className="text-sm font-medium">{style.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-muted-foreground">Rs. {style.price}</span>
+                                                    <span className="text-muted-foreground">₹ {style.price}</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
@@ -204,7 +204,7 @@ export function AdminDishItem({ dish, onAddToCart }: { dish: any, onAddToCart: (
                                             >
                                                 <span className="text-sm font-medium">{option.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-muted-foreground">Rs. {option.price}</span>
+                                                    <span className="text-muted-foreground">₹ {option.price}</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
@@ -234,7 +234,7 @@ export function AdminDishItem({ dish, onAddToCart }: { dish: any, onAddToCart: (
                                             >
                                                 <span className="text-sm font-medium">{option.name}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-muted-foreground">Rs. {option.price}</span>
+                                                    <span className="text-muted-foreground">₹ {option.price}</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
@@ -255,7 +255,7 @@ export function AdminDishItem({ dish, onAddToCart }: { dish: any, onAddToCart: (
                             onClick={confirmAddOptions}
                             disabled={selectedVariants.length < (dish.minSelectVarient || 0) || selectedStyles.length < (dish.minStyleOptions || 0)}
                         >
-                            Add to Cart - Rs. {(!selectedVariants.length ? dish.price : selectedVariants.reduce((sum: number, opt: any) => sum + opt.price, 0)) + selectedOptions.reduce((sum: number, opt: any) => sum + opt.price, 0) + selectedStyles.reduce((sum: number, opt: any) => sum + opt.price, 0) + selectedAddons.reduce((sum: number, opt: any) => sum + opt.price, 0)}
+                            Add to Cart - ₹ {(!selectedVariants.length ? dish.price : selectedVariants.reduce((sum: number, opt: any) => sum + opt.price, 0)) + selectedOptions.reduce((sum: number, opt: any) => sum + opt.price, 0) + selectedStyles.reduce((sum: number, opt: any) => sum + opt.price, 0) + selectedAddons.reduce((sum: number, opt: any) => sum + opt.price, 0)}
                         </Button>
                     </DrawerFooter>
                 </DrawerContent>

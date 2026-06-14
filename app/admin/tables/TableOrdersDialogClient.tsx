@@ -8,14 +8,19 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { getRunningOrdersByTable } from "../actions/order";
+import { deleteTable } from "../actions/table";
 import { OrderDialogClient } from "../orders/OrderDialogClient";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { PenBoxIcon, Trash2, X } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function TableOrdersDialogClient({ table }: { table: any }) {
     const [open, setOpen] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -42,11 +47,39 @@ export function TableOrdersDialogClient({ table }: { table: any }) {
         }
     };
 
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteTable(table.id);
+            setDeleteConfirmOpen(false);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <>
             <div
                 className="w-full h-full relative flex flex-col items-center justify-center group"
             >
+                <div className=" flex gap-2 absolute top-2 z-10 left-2">
+                    <Button 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDeleteConfirmOpen(true);
+                        }}
+                        className=" h-8! group-hover:block hidden p-2!">
+                        <Trash2 size={18} />
+                    </Button>
+                    <Link href={`/admin/tables/form?id=${table.id}`}>
+                        <Button className=" h-8! group-hover:block hidden p-2!">
+                            <PenBoxIcon size={18} />
+                        </Button>
+                    </Link>
+                </div>
                 {table.isRunning && <Badge className="absolute top-1 bg-green-700 text-white font-semibold right-1 text-xs z-10 pointer-events-none">Running</Badge>}
 
                 <Link href={`/admin/orders/form?tableId=${table.id}`} className="flex-1 flex items-center justify-center w-full hover:underline text-primary font-bold text-2xl z-0">
@@ -71,7 +104,7 @@ export function TableOrdersDialogClient({ table }: { table: any }) {
                 <DialogContent className=" sm:max-w-5xl w-full">
                     <DialogHeader>
                         <DialogTitle> Table: {table.name}</DialogTitle>
-                        <p className=" font-medium">Total: Rs. {orders.reduce((acc, order) => acc + order.totalPricing, 0)}</p>
+                        <p className=" font-medium">Total: ₹ {orders.reduce((acc, order) => acc + order.totalPricing, 0)}</p>
                     </DialogHeader>
 
                     <div className="mt-4">
@@ -113,7 +146,7 @@ export function TableOrdersDialogClient({ table }: { table: any }) {
                                             <TableCell>
                                                 <Badge variant="secondary">{o.status}</Badge>
                                             </TableCell>
-                                            <TableCell>Rs. {o.totalPricing}</TableCell>
+                                            <TableCell>₹ {o.totalPricing}</TableCell>
                                             <TableCell>{new Date(o.createdAt).toLocaleString()}</TableCell>
                                             <TableCell className="text-right">
                                                 <OrderDialogClient order={o} onUpdate={refreshOrders} />
@@ -123,6 +156,23 @@ export function TableOrdersDialogClient({ table }: { table: any }) {
                                 </TableBody>
                             </Table>
                         )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Table</DialogTitle>
+                        <div className="text-sm text-muted-foreground mt-2">
+                            Are you sure you want to delete table {table.name}? This action cannot be undone.
+                        </div>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)} disabled={isDeleting}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                            {isDeleting ? "Deleting..." : "Delete"}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

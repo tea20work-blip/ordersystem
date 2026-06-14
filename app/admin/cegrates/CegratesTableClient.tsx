@@ -60,7 +60,7 @@ export function CegratesTableClient({ initialCegrates }: CegratesTableClientProp
             <TableRow key={cegrate.id}>
               <TableCell>{cegrate.id}</TableCell>
               <TableCell className="font-medium">{cegrate.name}</TableCell>
-              <TableCell>Rs. {cegrate.amount}</TableCell>
+              <TableCell>₹ {cegrate.amount}</TableCell>
               <TableCell>
                 {cegrate.createdAt ? new Date(cegrate.createdAt).toLocaleDateString() : "N/A"}
               </TableCell>

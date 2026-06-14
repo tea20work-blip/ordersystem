@@ -1,10 +1,8 @@
 "use client";
 
 import { useCartStore } from "@/store/cart";
-import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "@/lib/s3";
-import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from "lucide-react";
+import { Plus, Minus, ArrowRight, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DialogUserDetails } from "@/components/DialogUserDetails";
@@ -34,8 +32,6 @@ export default function CartPage() {
     }, []);
 
     if (!mounted) return null; // Prevent hydration mismatch
-
-    console.log(cartItems)
 
     return (
         <div className="min-h-[50vh] flex flex-col bg-slate-50/50 dark:bg-background">
@@ -116,15 +112,15 @@ function OrderSummary({ totalAmount, cartItems, clearCart, setOrderId, tableCode
                 <div className="space-y-3 text-sm mb-6">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Subtotal</span>
-                        <span className="font-medium">Rs. {totalAmount}</span>
+                        <span className="font-medium">₹ {totalAmount}</span>
                     </div>
                     {/* <div className="flex justify-between">
                         <span className="text-muted-foreground">Taxes & Fees</span>
-                        <span className="font-medium text-muted-foreground">Rs. {GSTAmount}</span>
+                        <span className="font-medium text-muted-foreground">₹ {GSTAmount}</span>
                     </div> */}
                     <div className="pt-3 border-t flex justify-between items-center mt-3">
                         <span className="font-bold text-base">Total Amount</span>
-                        <span className="font-extrabold text-2xl text-primary">Rs. {totalAmountWithGST}</span>
+                        <span className="font-extrabold text-2xl text-primary">₹ {totalAmountWithGST}</span>
                     </div>
                 </div>
 
@@ -215,7 +211,7 @@ function CartItem({ item, updateQuantity, removeItem }: any) {
                 </div>
 
                 <div className="text-right sm:w-24 font-bold">
-                    Rs. {(item.dish.price + optionsPrice) * item.quantity}
+                    ₹ {(item.dish.price + optionsPrice) * item.quantity}
                 </div>
 
                 {/* <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeItem(item.dish.id)}>

@@ -125,7 +125,7 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                             <div key={`cegrate-${cegrate.id}`} className="flex border-b p-1 justify-between  overflow-y-auto">
                                 <div>
                                     <h3 className="font-semibold text-sm">{cegrate.name}</h3>
-                                    <p className="mt-2 font-medium text-xs">Rs. {cegrate.amount}</p>
+                                    <p className="mt-2 font-medium text-xs">₹ {cegrate.amount}</p>
                                 </div>
                                 <Button
                                     className=" cursor-pointer"
@@ -179,7 +179,7 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                                                     </div>
                                                 )}
                                             </span>
-                                            <span className="font-semibold text-sm">Rs. {item.price * item.quantity}</span>
+                                            <span className="font-semibold text-sm">₹ {item.price * item.quantity}</span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <div className="flex items-center gap-1 bg-muted rounded-md p-0.5">
@@ -204,7 +204,7 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                     <div className="border-t pt-4 space-y-4">
                         <div className="flex justify-between items-center text-lg font-bold">
                             <span>Total</span>
-                            <span>Rs. {totalPricing}</span>
+                            <span>₹ {totalPricing}</span>
                         </div>
                         <Button
                             className="w-full"

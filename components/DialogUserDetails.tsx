@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { userDetailsSchema, type UserDetailsFormData } from "@/zod/userDetailsSchema";
 
 import {
     Dialog,
@@ -18,24 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-// ------------------ ZOD SCHEMA ------------------
-const formSchema = z.object({
-    name: z.string().min(2, "Name is required"),
-    mobile: z
-        .string()
-        .regex(/^[6-9]\d{9}$/, "Enter valid mobile number"),
-    email: z.string().email("Invalid email").optional().or(z.literal("")),
-    message: z.string().optional(),
-});
-
-type FormData = z.infer<typeof formSchema>;
-
-// ------------------ COMPONENT ------------------
 type Props = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    data?: Partial<FormData>;
-    onSubmit: (data: FormData) => Promise<void> | void;
+    data?: Partial<UserDetailsFormData>;
+    onSubmit: (data: UserDetailsFormData) => Promise<void> | void;
 };
 
 export function DialogUserDetails({
@@ -48,8 +35,8 @@ export function DialogUserDetails({
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
-    } = useForm<FormData>({
-        resolver: zodResolver(formSchema),
+    } = useForm<UserDetailsFormData>({
+        resolver: zodResolver(userDetailsSchema),
         defaultValues: data,
     });
 

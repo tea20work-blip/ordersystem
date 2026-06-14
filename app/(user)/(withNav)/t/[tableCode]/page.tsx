@@ -10,7 +10,6 @@ import { notFound } from "next/navigation";
 
 export default async function Home({ params }: { params: Promise<{ tableCode: string }> }) {
     const pageParams = await params;
-    console.log("tableCode", pageParams);
     const [currentTable] = await db.select({ id: table.id, name: table.name, tableCode: table.tableCode }).from(table).where(eq(table.tableCode, pageParams.tableCode));
     if (!currentTable) {
         return notFound();

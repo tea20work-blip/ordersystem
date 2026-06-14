@@ -232,7 +232,7 @@ export default async function DishFormPage({
                                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                             />
                                             <Label htmlFor={`addon-${product.id}`} className="font-normal cursor-pointer">
-                                                {product.name} (Rs. {product.price})
+                                                {product.name} (₹ {product.price})
                                             </Label>
                                         </div>
                                     ))
