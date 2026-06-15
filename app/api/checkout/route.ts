@@ -53,7 +53,9 @@ export async function POST(req: Request) {
                 dishId: item.dish.id,
                 dishName: item.dish.name,
                 dishImageUrl: item.dish.imageUrl,
-                pricing: item.dish.price,
+
+                pricing: item.dish.price + item.selectedOptions?.reduce((acc: number, option: any) => acc + Number(option.price), 0),
+
                 quantity: item.quantity,
                 options: item.selectedOptions || [],
             }));
