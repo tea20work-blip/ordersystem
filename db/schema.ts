@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, integer, text, timestamp, pgEnum, jsonb, primaryKey, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, integer, text, timestamp, pgEnum, jsonb, primaryKey, boolean, date } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
     id: serial("id").primaryKey(),
@@ -159,3 +159,16 @@ export const cegrates = pgTable("cegrates", {
     amount: integer("amount").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
 })
+
+export const dailySalesSummary = pgTable("daily_sales_summary", {
+    id: serial("id").primaryKey(),
+    date: date("date").notNull().unique(),
+    totalOrders: integer("total_orders").default(0),
+    completedOrders: integer("completed_orders").default(0),
+    cancelledOrders: integer("cancelled_orders").default(0),
+    grossRevenue: integer("gross_revenue").default(0),
+    cashRevenue: integer("cash_revenue").default(0),
+    onlineRevenue: integer("online_revenue").default(0),
+    lendingTotal: integer("lending_total").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+});
