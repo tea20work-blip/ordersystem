@@ -42,7 +42,8 @@ export async function POST(req: Request) {
             userId,
             totalPricing,
             status: "pending",
-            message
+            message,
+            orderType: tableCode ? "dine_in" : "delivery",
         }).returning();
         const orderId = newOrder[0].id;
 

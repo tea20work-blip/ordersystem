@@ -14,6 +14,7 @@ export async function getOrders(page: number = 1, limit: number = 10) {
             totalPricing: order.totalPricing,
             status: order.status,
             deliveryStatus: order.deliveryStatus,
+            orderType: order.orderType,
             createdAt: order.createdAt,
             tableId: order.tableId,
             tableName: table.name,
@@ -162,6 +163,7 @@ export async function createAdminOrder(data: { tableId?: number | null, userId?:
         lendingUserId: data.lendingUserId || null,
         totalPricing: data.totalPricing,
         status: "pending",
+        orderType: data.tableId ? "dine_in" : "take_away",
     }).returning({ id: order.id });
 
     if (data.items.length > 0) {

@@ -90,7 +90,7 @@ export const dishCategory = pgTable("dish_category", {
 });
 
 export const orderDeliveryStatus = pgEnum("order_delivery_status", ["ordered", "ready", "dispatched", "delivered"]);
-
+export const orderType = pgEnum("order_type", ["dine_in", "take_away", "delivery"]);
 
 export const order = pgTable("order", {
     id: serial("id").primaryKey(),
@@ -108,6 +108,7 @@ export const order = pgTable("order", {
     lendingUserId: integer("lending_user_id").references(() => user.id, {
         onDelete: "set null"
     }),
+    orderType: orderType("order_type").default("dine_in"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     message: varchar("message", { length: 255 }),
