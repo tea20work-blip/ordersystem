@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PayLendingDialog } from "./pay-lending-dialog";
 import { ArrowLeft } from "lucide-react";
+import { OrderDialogClient } from "../../orders/OrderDialogClient";
 
 export default async function UserDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -71,6 +72,7 @@ export default async function UserDetailsPage({ params }: { params: Promise<{ id
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Table</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -85,6 +87,9 @@ export default async function UserDetailsPage({ params }: { params: Promise<{ id
                                     <Badge variant={order.status === "paid_user" ? "destructive" : "secondary"}>{order.status}</Badge>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{order.totalPricing}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <OrderDialogClient order={order} />
+                                </td>
                             </tr>
                         ))}
                         {orders.length === 0 && (

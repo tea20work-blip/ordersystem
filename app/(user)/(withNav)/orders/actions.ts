@@ -20,6 +20,7 @@ export async function fetchOrdersByMobileAction(mobile: string) {
                 totalPricing: order.totalPricing,
                 status: order.status,
                 createdAt: order.createdAt,
+                deliveryStatus: order.deliveryStatus,
                 // tableCode: table.tableCode,
                 paidOnline: order.paidOnline,
                 paidCash: order.paidCash

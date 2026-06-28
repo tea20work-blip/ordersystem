@@ -7,7 +7,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function getDishes(searchQuery?: string) {
     if (searchQuery && searchQuery.trim() !== "") {
-        return await db.select().from(dish).where(and(ilike(dish.name, `%${searchQuery}%`), eq(dish.isDeleted, false))).orderBy(asc(dish.priority), asc(dish.createdAt));
+        return await db.select().from(dish).where(and(ilike(dish.name, `%${searchQuery}%`), eq(dish.isDeleted, false))).orderBy(asc(dish.priority));
     }
     return await db.select().from(dish).where(eq(dish.isDeleted, false)).orderBy(asc(dish.priority), asc(dish.createdAt));
 }
@@ -115,13 +115,14 @@ export async function updateDish(id: number, data: { name: string; price: number
     }
 
     revalidatePath("/admin/dishes");
+    revalidateTag("menu-data", "max");
 }
-
 export async function deleteDish(id: number) {
     await db.delete(addons).where(eq(addons.dishId, id));
     await db.delete(dishCategory).where(eq(dishCategory.dishId, id));
     await db.delete(dish).where(eq(dish.id, id));
     revalidatePath("/admin/dishes");
+    revalidateTag("menu-data", "max");
 }
 
 export async function updateDishPriorities(updates: { id: number, priority: number }[]) {

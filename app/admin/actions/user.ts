@@ -25,9 +25,17 @@ export async function getUserOrders(userId: number) {
         totalPricing: order.totalPricing,
         createdAt: order.createdAt,
         tableName: table.name,
+        tableId: order.tableId,
+        userName: user.name,
+        userNumber: user.number,
+        isRunning: order.isRunning,
+        lendingUserId: order.lendingUserId,
+        paidOnline: order.paidOnline,
+        paidCash: order.paidCash,
     })
         .from(order)
         .leftJoin(table, eq(order.tableId, table.id))
+        .leftJoin(user, eq(order.userId, user.id))
         .where(or(eq(order.userId, userId), eq(order.lendingUserId, userId)))
         .orderBy(desc(order.createdAt));
 

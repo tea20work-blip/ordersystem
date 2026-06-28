@@ -155,9 +155,11 @@ export async function updateOrderAdvanced(orderId: number, data: {
     revalidateTag("today-top-ordered-dishes", "max");
 }
 
-export async function createAdminOrder(data: { tableId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, name?: string, imageUrl?: string, options?: any[] }[] }) {
+export async function createAdminOrder(data: { tableId?: number | null, userId?: number | null, lendingUserId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, name?: string, imageUrl?: string, options?: any[] }[] }) {
     const [newOrder] = await db.insert(order).values({
         tableId: data.tableId || null,
+        userId: data.userId || null,
+        lendingUserId: data.lendingUserId || null,
         totalPricing: data.totalPricing,
         status: "pending",
     }).returning({ id: order.id });

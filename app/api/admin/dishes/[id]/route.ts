@@ -1,6 +1,7 @@
 import db from "@/db";
 import { dish, dishCategory, orderItem } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
@@ -10,6 +11,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
 
 
         await db.update(dish).set({ isDeleted: true }).where(eq(dish.id, id));
+        revalidateTag("menu-data", "max");
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

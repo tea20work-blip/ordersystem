@@ -22,12 +22,20 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DeleteDishButton } from "@/components/delete-dish-button";
 import { getImageUrl } from "@/lib/s3";
 import { updateDishPriorities } from "../actions/dish";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 
 type Dish = {
   id: number;
@@ -65,22 +73,47 @@ function SortableTableRow({ dish }: SortableTableRowProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    ...(isDragging ? { zIndex: 50, position: "relative" as const, opacity: 0.8, background: "var(--background)" } : {}),
+    ...(isDragging
+      ? {
+          zIndex: 50,
+          position: "relative" as const,
+          opacity: 0.8,
+          background: "var(--background)",
+        }
+      : {}),
   };
 
+  console.log(dish.imageUrl);
+
   return (
-    <TableRow ref={setNodeRef} style={style} className={isDragging ? "shadow-md" : ""}>
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={isDragging ? "shadow-md" : ""}
+    >
       <TableCell className="w-[50px]">
-        <div {...attributes} {...listeners} className="cursor-grab hover:text-primary p-2">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab hover:text-primary p-2"
+        >
           <GripVertical className="h-4 w-4" />
         </div>
       </TableCell>
       <TableCell className="font-medium">{dish.priority}</TableCell>
       <TableCell>
         {dish.imageUrl ? (
-          <img src={getImageUrl(dish.imageUrl)} alt={dish.name} className="w-12 h-12 rounded object-cover" />
+          <Image
+            height={200}
+            width={200}
+            src={getImageUrl(dish.imageUrl)}
+            alt={dish.name}
+            className="w-12 h-12 rounded object-cover"
+          />
         ) : (
-          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-xs">No Image</div>
+          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-xs">
+            No Image
+          </div>
         )}
       </TableCell>
       <TableCell>{dish.name}</TableCell>
@@ -111,14 +144,14 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
   const [searchDish, setSearchDish] = useState("");
 
   const filteredDishes = dishes.filter((dish) =>
-    dish.name.toLowerCase().includes(searchDish.toLowerCase())
+    dish.name.toLowerCase().includes(searchDish.toLowerCase()),
   );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -179,7 +212,10 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+              <TableCell
+                colSpan={6}
+                className="text-center py-6 text-muted-foreground"
+              >
                 No dishes found.
               </TableCell>
             </TableRow>
@@ -189,50 +225,48 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
     );
   }
 
-  return (<>
-    <div className="mb-4">
-      <Input
-        placeholder="Search by name or category..."
-        value={searchDish}
-        onChange={(e) => setSearchDish(e.target.value)}
-        className="max-w-sm"
-      />
-    </div>
+  return (
+    <>
+      <div className="mb-4">
+        <Input
+          placeholder="Search by name or category..."
+          value={searchDish}
+          onChange={(e) => setSearchDish(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
 
-
-    <div className="rounded-md border bg-card text-card-foreground shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]"></TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Image</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              disabled={searchDish !== ""}
-              items={filteredDishes.map((d) => d.id)}
-              strategy={verticalListSortingStrategy}
+      <div className="rounded-md border bg-card text-card-foreground shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]"></TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Image</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              {filteredDishes.map((dish) => (
-                <SortableTableRow key={dish.id} dish={dish} />
-              ))}
-            </SortableContext>
-          </DndContext>
-        </TableBody>
-      </Table>
-    </div>
-
-  </>
-  )
-
+              <SortableContext
+                disabled={searchDish !== ""}
+                items={filteredDishes.map((d) => d.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {filteredDishes.map((dish) => (
+                  <SortableTableRow key={dish.id} dish={dish} />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
 }

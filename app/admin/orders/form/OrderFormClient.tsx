@@ -8,13 +8,59 @@ import { Plus, Minus, Trash2, Search } from "lucide-react";
 import { createAdminOrder } from "../../actions/order";
 import { useRouter } from "next/navigation";
 import { AdminDishItem } from "./AdminDishItem";
+import { z } from "zod";
+import { userDetailsSchema } from "@/zod/userDetailsSchema";
+import { createUser } from "../../actions/user";
 
-export function OrderFormClient({ initialDishes, initialTables, initialCegrates = [], defaultTableId = "" }: { initialDishes: any[], initialTables: any[], initialCegrates?: any[], defaultTableId?: string }) {
+export function OrderFormClient({ initialDishes, initialTables, initialCegrates = [], initialUsers = [], defaultTableId = "" }: { initialDishes: any[], initialTables: any[], initialCegrates?: any[], initialUsers?: any[], defaultTableId?: string }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTable, setSelectedTable] = useState<string>(defaultTableId);
+    const [selectedUserId, setSelectedUserId] = useState<string>("");
     const [cart, setCart] = useState<{ id: string, dishId?: number, cegrateId?: number, name: string, price: number, quantity: number, imageUrl?: string, options?: any[] }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [users, setUsers] = useState<any[]>(initialUsers);
+    const [isCreatingUser, setIsCreatingUser] = useState(false);
+    const [newUserName, setNewUserName] = useState("");
+    const [newUserNumber, setNewUserNumber] = useState("");
+    const [createUserErrors, setCreateUserErrors] = useState<{ name?: string, mobile?: string }>({});
+
+    const handleCreateUser = async () => {
+        setCreateUserErrors({});
+        const schemaToUse = z.object({
+            name: userDetailsSchema.shape.name,
+            mobile: newUserNumber.trim() === "" ? z.string().optional() : userDetailsSchema.shape.mobile,
+        });
+
+        const validation = schemaToUse.safeParse({
+            name: newUserName,
+            mobile: newUserNumber.trim() === "" ? undefined : newUserNumber,
+        });
+
+        if (!validation.success) {
+            const errors = validation.error.flatten().fieldErrors;
+            setCreateUserErrors({
+                name: errors.name?.[0],
+                mobile: errors.mobile?.[0],
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const u = await createUser({ name: newUserName, number: newUserNumber });
+            setUsers(prev => [...prev, u]);
+            setSelectedUserId(u.id.toString());
+            setIsCreatingUser(false);
+            setNewUserName("");
+            setNewUserNumber("");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const filteredDishes = initialDishes.filter(dish =>
         dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -68,6 +114,8 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
         try {
             await createAdminOrder({
                 tableId: selectedTable ? parseInt(selectedTable, 10) : null,
+                userId: selectedUserId ? parseInt(selectedUserId, 10) : null,
+                lendingUserId: selectedUserId ? parseInt(selectedUserId, 10) : null,
                 totalPricing,
                 items: cart.map(item => ({
                     dishId: item.dishId,
@@ -158,6 +206,42 @@ export function OrderFormClient({ initialDishes, initialTables, initialCegrates 
                                 <option key={table.id} value={table.id}>{table.name}</option>
                             ))}
                         </select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="user">Select User (Optional)</Label>
+                        <div className="flex gap-2">
+                            <select
+                                id="user"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={selectedUserId}
+                                onChange={(e) => setSelectedUserId(e.target.value)}
+                            >
+                                <option value="">-- No User --</option>
+                                {users.map(u => (
+                                    <option key={u.id} value={u.id}>{u.name || 'Unknown'} ({u.number})</option>
+                                ))}
+                            </select>
+                            <Button type="button" variant="outline" onClick={() => setIsCreatingUser(!isCreatingUser)}>
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        {isCreatingUser && (
+                            <div className="flex flex-col gap-2 p-3 border rounded bg-muted/20 mt-2">
+                                <div className="text-sm font-semibold">Create New User</div>
+                                <div className="flex gap-2 flex-col">
+                                    <div className="flex flex-col gap-1">
+                                        <input type="text" placeholder="Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} className={`border rounded px-2 py-1 text-sm bg-background ${createUserErrors.name ? 'border-red-500' : ''}`} />
+                                        {createUserErrors.name && <span className="text-xs text-red-500">{createUserErrors.name}</span>}
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <input type="text" placeholder="Phone (Optional)" value={newUserNumber} onChange={e => setNewUserNumber(e.target.value)} className={`border rounded px-2 py-1 text-sm bg-background ${createUserErrors.mobile ? 'border-red-500' : ''}`} />
+                                        {createUserErrors.mobile && <span className="text-xs text-red-500">{createUserErrors.mobile}</span>}
+                                    </div>
+                                    <Button type="button" size="sm" onClick={handleCreateUser} disabled={isSubmitting}>Save User</Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-4 pt-4">
