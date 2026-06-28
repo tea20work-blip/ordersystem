@@ -2,9 +2,19 @@
 // lib/getCachedMenu.ts
 import { unstable_cache } from "next/cache";
 import db from "@/db";
-import { addons, category, dish, dishCategory } from "@/db/schema";
+import { addons, category, dish, dishCategory, poster } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+
+async function getPosters() {
+    return await db.select().from(poster).orderBy(poster.priority, poster.createdAt);
+}
+
+// ✅ cached function
+export const getCachedPosters = unstable_cache(getPosters, ["poster-data"], {
+    tags: ["poster-data"],
+    revalidate: 7200, // 2 hour
+});
 
 const addonDish = alias(dish, "addonDish");
 

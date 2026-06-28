@@ -11,7 +11,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, List, Utensils, Armchair, ClipboardList, User, AlarmSmoke, TrendingUp } from "lucide-react";
+import { LayoutDashboard, List, Utensils, Armchair, ClipboardList, User, AlarmSmoke, TrendingUp, Image } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -55,6 +55,11 @@ const items = [
         title: "Sales Report",
         url: "/admin/sales-report",
         icon: TrendingUp,
+    },
+    {
+        title: "Posters",
+        url: "/admin/poster",
+        icon: Image,
     },
 ];
 

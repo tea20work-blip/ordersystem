@@ -172,3 +172,13 @@ export const dailySalesSummary = pgTable("daily_sales_summary", {
     lendingTotal: integer("lending_total").default(0),
     createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const poster = pgTable("poster", {
+    id: serial("id").primaryKey(),
+    posterName: varchar("poster_name", { length: 255 }).notNull(),
+    posterImage: varchar("poster_image", { length: 255 }).notNull(),
+    posterUrl: varchar("poster_url", { length: 255 }).notNull(),
+    priority: integer("priority").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+})

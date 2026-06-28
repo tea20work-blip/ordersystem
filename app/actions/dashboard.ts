@@ -1,6 +1,6 @@
 import db from "@/db";
 import { dish, order, orderItem } from "@/db/schema";
-import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lt, ne, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 export type TopOrderedDish = {
@@ -54,10 +54,12 @@ export async function getTodayTopOrderedDishes(): Promise<TopOrderedDish[]> {
             totalPrice: sql<number>`COALESCE(SUM(${orderItem.quantity} * ${orderItem.pricing}), 0)`,
         })
         .from(orderItem)
+        .innerJoin(order, eq(orderItem.orderId, order.id))
         .where(
             and(
                 gte(orderItem.createdAt, startOfDay),
-                lt(orderItem.createdAt, endOfDay)
+                lt(orderItem.createdAt, endOfDay),
+                ne(order.status, "cancelled")
             )
         )
         .groupBy(
