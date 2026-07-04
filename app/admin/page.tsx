@@ -3,7 +3,7 @@ import { getTodayTopOrderedDishesCashed } from "../actions/dashboard";
 import AdminSummary from "./AdminSummary";
 import { order } from "@/db/schema";
 import db from "@/db";
-import { and, gte, lt, ne } from "drizzle-orm";
+import { and, gte, lt, ne, sum } from "drizzle-orm";
 
 export default async function AdminPage() {
   const data = await getTodayTopOrderedDishesCashed();
@@ -17,6 +17,7 @@ export default async function AdminPage() {
   const orderData = await db
     .select({
       type: order.orderType,
+      totalAmount: sum(order.totalPricing),
     })
     .from(order)
     .where(
@@ -25,7 +26,8 @@ export default async function AdminPage() {
         lt(order.createdAt, endOfDay),
         ne(order.status, "cancelled"),
       ),
-    );
+    )
+    .groupBy(order.orderType);
 
   const dishData = data.filter((item) => item.cegrateId === null);
   const cegrateData = data.filter((item) => item.cegrateId !== null);
@@ -38,26 +40,34 @@ export default async function AdminPage() {
     0,
   );
 
-  const dineInCount = orderData.filter(o => o.type === "dine_in").length;
-  const takeawayCount = orderData.filter(o => o.type === "take_away").length;
-  const deliveryCount = orderData.filter(o => o.type === "delivery").length;
+  const dineIn = orderData.find((o) => o.type === "dine_in")?.totalAmount || 0;
+  const takeaway =
+    orderData.find((o) => o.type === "take_away")?.totalAmount || 0;
+  const delivery =
+    orderData.find((o) => o.type === "delivery")?.totalAmount || 0;
 
   return (
     <div className="p-6">
       <AdminSummary />
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Dine In</p>
-          <p className="text-3xl font-bold mt-2 text-purple-600">{dineInCount}</p>
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+            Dine In
+          </p>
+          <p className="text-3xl font-bold mt-2 text-purple-600">{dineIn}</p>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Takeaway</p>
-          <p className="text-3xl font-bold mt-2 text-blue-600">{takeawayCount}</p>
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+            Takeaway
+          </p>
+          <p className="text-3xl font-bold mt-2 text-blue-600">{takeaway}</p>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Delivery</p>
-          <p className="text-3xl font-bold mt-2 text-orange-600">{deliveryCount}</p>
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+            Delivery
+          </p>
+          <p className="text-3xl font-bold mt-2 text-orange-600">{delivery}</p>
         </div>
       </div>
 

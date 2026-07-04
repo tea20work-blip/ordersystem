@@ -185,7 +185,7 @@ export function ClientMenu({
                 <div
                   key={category.id}
                   id={category.id}
-                  className=" mb-3 shadow"
+                  className=" mb-3 shadow scroll-mt-64"
                 >
                   <h1 className=" bg-[#774936] text-white py-2 px-4 font-semibold">
                     {category.name}
