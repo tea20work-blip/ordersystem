@@ -22,6 +22,7 @@ export async function getOrders(page: number = 1, limit: number = 10) {
             userNumber: user.number,
             isRunning: order.isRunning,
             lendingUserId: order.lendingUserId,
+            message: order.message,
         })
         .from(order)
         .leftJoin(table, eq(order.tableId, table.id))

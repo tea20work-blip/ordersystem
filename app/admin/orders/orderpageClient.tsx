@@ -54,6 +54,7 @@ export default function OrdersPage() {
               <TableHead>Total (₹)</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Delivery Status</TableHead>
+              <TableHead>Message</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -61,7 +62,7 @@ export default function OrdersPage() {
             {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={10}
                   className="text-center py-6 text-muted-foreground"
                 >
                   Loading orders...
@@ -70,7 +71,7 @@ export default function OrdersPage() {
             ) : orders.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={10}
                   className="text-center py-6 text-muted-foreground"
                 >
                   No orders found.
@@ -92,14 +93,20 @@ export default function OrdersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                      order.orderType === "dine_in" 
-                        ? "bg-purple-100 text-purple-800" 
-                        : order.orderType === "take_away" 
-                        ? "bg-blue-100 text-blue-800" 
-                        : "bg-orange-100 text-orange-800"
-                    }`}>
-                      {order.orderType === "dine_in" ? "Dine In" : order.orderType === "take_away" ? "Takeaway" : "Delivery"}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                        order.orderType === "dine_in"
+                          ? "bg-purple-100 text-purple-800"
+                          : order.orderType === "take_away"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-orange-100 text-orange-800"
+                      }`}
+                    >
+                      {order.orderType === "dine_in"
+                        ? "Dine In"
+                        : order.orderType === "take_away"
+                          ? "Takeaway"
+                          : "Delivery"}
                     </span>
                   </TableCell>
                   <TableCell>{order.tableName || "N/A"}</TableCell>
@@ -129,6 +136,12 @@ export default function OrdersPage() {
                       orderId={order.id}
                       initialStatus={order.deliveryStatus || "ordered"}
                     />
+                  </TableCell>
+                  <TableCell
+                    className="w-[252px] whitespace-break-spaces"
+                    title={order.message || ""}
+                  >
+                    {order.message || "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     <OrderDialogClient order={order} />

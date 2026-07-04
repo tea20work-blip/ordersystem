@@ -92,6 +92,7 @@ export const useCartStore = create<CartState>()(
         }),
         {
             name: 't20-cart-storage',
+            partialize: (state) => ({ items: state.items }),
         }
     )
 );
