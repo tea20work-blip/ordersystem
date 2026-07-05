@@ -65,7 +65,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "https://d2t6059p6jfvt4.cloudfront.net/t20/tea20.png",
         width: 1200,
         height: 630,
         alt: "Tea 20 Cafe Jaipur",
@@ -78,7 +78,7 @@ export const metadata = {
     title: "Tea 20 Cafe | Best Tea & Coffee Cafe in Jaipur",
     description:
       "Fresh tea, coffee, burgers, sandwiches, pasta, Maggi, shakes, mocktails & more. Order online from Tea 20 Cafe.",
-    images: ["/og-image.jpg"],
+    images: ["https://d2t6059p6jfvt4.cloudfront.net/t20/tea20.png"],
   },
 
   alternates: {
