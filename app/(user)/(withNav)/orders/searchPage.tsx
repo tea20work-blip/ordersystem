@@ -29,6 +29,130 @@ export function OrdersPage() {
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
 
+  const downloadBill = (order: any) => {
+    import("jspdf").then(({ jsPDF }) => {
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [160, 200],
+      });
+
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Tea 20 cafe", 80, 10, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("Gyan Vihar Marg, Jaipur, Raj.", 80, 15, { align: "center" });
+
+      doc.text(
+        "--------------------------------------------------------------------------------------------------------------------------------",
+        80,
+        20,
+        { align: "center" },
+      );
+      doc.text("RECEIPT", 80, 25, { align: "center" });
+      doc.text(
+        "--------------------------------------------------------------------------------------------------------------------------------",
+        80,
+        30,
+        { align: "center" },
+      );
+
+      doc.text(`Name: ${order.customerName || "Customer"}`, 5, 35);
+      doc.text(`Invoice No: ${order.id}`, 155, 35, { align: "right" });
+
+      doc.text(`Table: ${order.tableNumber || "N/A"}`, 5, 40);
+      const date = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString()
+        : new Date().toLocaleDateString();
+      doc.text(`Date: ${date}`, 155, 40, { align: "right" });
+
+      doc.text(
+        "--------------------------------------------------------------------------------------------------------------------------------",
+        80,
+        45,
+        { align: "center" },
+      );
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Item", 5, 50);
+      doc.text("Price", 115, 50, { align: "right" });
+      doc.text("Qty", 125, 50, { align: "center" });
+      doc.text("Total", 155, 50, { align: "right" });
+
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "--------------------------------------------------------------------------------------------------------------------------------",
+        80,
+        55,
+        { align: "center" },
+      );
+
+      let y = 60;
+      order.items?.forEach((item: any) => {
+        let itemName = item.dishName;
+        if (item.options && item.options.length > 0) {
+          itemName += ` (${item.options.map((o: any) => o.name).join(", ")})`;
+        }
+
+        const splitTitle = doc.splitTextToSize(itemName, 35);
+        for (let i = 0; i < splitTitle.length; i++) {
+          doc.text(splitTitle[i], 5, y);
+          if (i === 0) {
+            doc.text(`Rs. ${item.pricing}`, 115, y, { align: "right" });
+            doc.text(`${item.quantity}`, 125, y, { align: "center" });
+            doc.text(`Rs. ${item.pricing * item.quantity}`, 155, y, {
+              align: "right",
+            });
+          }
+          y += 5;
+        }
+      });
+
+      doc.text(
+        "--------------------------------------------------------------------------------------------------------------------------------",
+        80,
+        y,
+        { align: "center" },
+      );
+      y += 5;
+
+      doc.text("Sub-Total:", 115, y, { align: "right" });
+      doc.text(`Rs. ${order.totalPricing}`, 155, y, { align: "right" });
+      y += 5;
+
+      doc.text("CGST:", 115, y, { align: "right" });
+      doc.text("0% Rs. 0", 155, y, { align: "right" });
+      y += 5;
+
+      doc.text("SGST:", 115, y, { align: "right" });
+      doc.text("0% Rs. 0", 155, y, { align: "right" });
+      y += 5;
+
+      doc.text("---------------------------", 155, y, { align: "right" });
+      y += 5;
+
+      doc.text(`Mode: ${order.paymentMethod || "Cash"}`, 5, y);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total: Rs. ${order.totalPricing}`, 155, y, { align: "right" });
+      doc.setFont("helvetica", "normal");
+
+      y += 10;
+      doc.text(
+        "--------------------------------------------------------------------------------------------------------------------------------",
+        80,
+        y,
+        { align: "center" },
+      );
+      y += 5;
+      doc.text("**SAVE PAPER SAVE NATURE !!**", 80, y, { align: "center" });
+      y += 5;
+
+      doc.save(`bill-${order.id}.pdf`);
+    });
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     orderId = null;
     e.preventDefault();
@@ -108,12 +232,21 @@ export function OrdersPage() {
                     : ""}
                 </div>
               </div>
-              <CardDescription>
-                Status:{" "}
-                <span className="font-semibold uppercase">
-                  {order.deliveryStatus}
-                </span>
-                {order.tableCode && ` • Table: ${order.tableCode}`}
+              <CardDescription className="flex justify-between items-center mt-2">
+                <div>
+                  Status:{" "}
+                  <span className="font-semibold uppercase">
+                    {order.deliveryStatus}
+                  </span>
+                  {order.tableCode && ` • Table: ${order.tableCode}`}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadBill(order)}
+                >
+                  Download Bill
+                </Button>
               </CardDescription>
             </CardHeader>
             <CardContent>

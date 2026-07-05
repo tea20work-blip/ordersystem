@@ -1,34 +1,47 @@
 import { getImageUrl } from "@/lib/s3";
-import { getTodayTopOrderedDishesCashed } from "../actions/dashboard";
+import { getTodayTopOrderedDishes } from "../actions/dashboard";
 import AdminSummary from "./AdminSummary";
 import { order } from "@/db/schema";
 import db from "@/db";
-import { and, gte, lt, ne, sum } from "drizzle-orm";
+import { and, eq, gte, lt, ne, sum } from "drizzle-orm";
+import { AdminOrderTypeSummary } from "./AdminOrderTypeSummary";
+import { Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-export default async function AdminPage() {
-  const data = await getTodayTopOrderedDishesCashed();
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: { filter?: string; duration?: "day" | "week" | "month" };
+}) {
+  const { filter, duration = "day" } = await searchParams;
+  let isFilter = false;
+  const whereCaluse = [];
 
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
-
-  const orderData = await db
-    .select({
-      type: order.orderType,
-      totalAmount: sum(order.totalPricing),
-    })
-    .from(order)
-    .where(
-      and(
-        gte(order.createdAt, startOfDay),
-        lt(order.createdAt, endOfDay),
-        ne(order.status, "cancelled"),
-      ),
-    )
-    .groupBy(order.orderType);
-
+  if (filter) {
+    isFilter = true;
+    switch (filter) {
+      case "dine_in":
+        whereCaluse.push(eq(order.orderType, "dine_in"));
+        break;
+      case "take_away":
+        whereCaluse.push(eq(order.orderType, "take_away"));
+        break;
+      case "delivery":
+        whereCaluse.push(eq(order.orderType, "delivery"));
+        break;
+      case "paid_online":
+        whereCaluse.push(eq(order.status, "paid_online"));
+        break;
+      case "paid_cash":
+        whereCaluse.push(eq(order.status, "paid_cash"));
+        break;
+      case "paid_user":
+        whereCaluse.push(eq(order.status, "paid_user"));
+        break;
+    }
+  }
+  const data = await getTodayTopOrderedDishes(whereCaluse, duration);
   const dishData = data.filter((item) => item.cegrateId === null);
   const cegrateData = data.filter((item) => item.cegrateId !== null);
   const totalDishRevenue = dishData.reduce(
@@ -40,41 +53,47 @@ export default async function AdminPage() {
     0,
   );
 
-  const dineIn = orderData.find((o) => o.type === "dine_in")?.totalAmount || 0;
-  const takeaway =
-    orderData.find((o) => o.type === "take_away")?.totalAmount || 0;
-  const delivery =
-    orderData.find((o) => o.type === "delivery")?.totalAmount || 0;
-
   return (
     <div className="p-6">
-      <AdminSummary />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-            Dine In
-          </p>
-          <p className="text-3xl font-bold mt-2 text-purple-600">{dineIn}</p>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-            Takeaway
-          </p>
-          <p className="text-3xl font-bold mt-2 text-blue-600">{takeaway}</p>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-            Delivery
-          </p>
-          <p className="text-3xl font-bold mt-2 text-orange-600">{delivery}</p>
-        </div>
+      <div className="flex gap-4 mb-6">
+        <Link href={`/admin?duration=day${filter ? `&filter=${filter}` : ""}`}>
+          <Button variant={duration === "day" ? "default" : "outline"}>
+            Daily
+          </Button>
+        </Link>
+        <Link href={`/admin?duration=week${filter ? `&filter=${filter}` : ""}`}>
+          <Button variant={duration === "week" ? "default" : "outline"}>
+            Weekly
+          </Button>
+        </Link>
+        <Link
+          href={`/admin?duration=month${filter ? `&filter=${filter}` : ""}`}
+        >
+          <Button variant={duration === "month" ? "default" : "outline"}>
+            Monthly
+          </Button>
+        </Link>
       </div>
+      <AdminSummary />
+      <Suspense
+        fallback={<div className="text-center text-gray-500">Loading...</div>}
+      >
+        <AdminOrderTypeSummary />
+      </Suspense>
 
       <div className=" flex gap-4 justify-between">
-        <h1 className="text-2xl font-bold mb-6">Today's Ordered Dishes</h1>
+        <h1 className="text-2xl font-bold mb-4">Today's Ordered Dishes</h1>
         <p className="text-lg">₹ {totalDishRevenue} / - </p>
       </div>
+      {filter && (
+        <p className=" mb-6">
+          Applied filter: {filter}
+          <br />
+          <Link href={"/admin"}>
+            <Button className="mt-3">Remove all filters</Button>
+          </Link>
+        </p>
+      )}
       <div className="overflow-x-auto bg-white border border-gray-200 shadow-sm rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">

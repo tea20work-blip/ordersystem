@@ -33,12 +33,18 @@ export async function getTodayRevenue() {
   return results;
 }
 
-export async function getTodayTopOrderedDishes(): Promise<TopOrderedDish[]> {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+export async function getTodayTopOrderedDishes(whereClause: any, durationType? : "day" | "week" | "month" ): Promise<TopOrderedDish[]> {
+  let startDate = new Date();
+  startDate.setHours(0, 0, 0, 0);
 
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+  let endDate = new Date();
+  endDate.setHours(23, 59, 59, 999);
+
+  if (durationType === "week") {
+    startDate.setDate(startDate.getDate() - startDate.getDay()); // Start of the week (Sunday)
+  } else if (durationType === "month") {
+    startDate.setDate(1); // First day of the month
+  }
 
   const results = await db
     .select({
@@ -53,9 +59,10 @@ export async function getTodayTopOrderedDishes(): Promise<TopOrderedDish[]> {
     .innerJoin(order, eq(orderItem.orderId, order.id))
     .where(
       and(
-        gte(orderItem.createdAt, startOfDay),
-        lt(orderItem.createdAt, endOfDay),
+        gte(orderItem.createdAt, startDate),
+        lt(orderItem.createdAt, endDate),
         ne(order.status, "cancelled"),
+        ...whereClause
       ),
     )
     .groupBy(
@@ -72,9 +79,3 @@ export async function getTodayTopOrderedDishes(): Promise<TopOrderedDish[]> {
     totalPrice: Number(row.totalPrice),
   }));
 }
-
-export const getTodayTopOrderedDishesCashed = unstable_cache(
-  getTodayTopOrderedDishes,
-  ["today-top-ordered-dishes"],
-  { revalidate: 20, tags: ["today-top-ordered-dishes"] },
-);
