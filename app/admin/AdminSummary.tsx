@@ -5,34 +5,22 @@ import Link from "next/link";
 
 const AdminSummary = async () => {
   const todayRevenue = await getTodayRevenue();
-  const todayOnline = todayRevenue.reduce(
-    (acc, curr: any) => acc + curr.paidOnline,
-    0,
-  );
-  const todayCash = todayRevenue.reduce(
-    (acc, curr: any) => acc + curr.paidCash,
-    0,
-  );
-  const todayLending = todayRevenue.reduce(
-    (acc, curr: any) => acc + curr.lendingAmount,
-    0,
-  );
   return (
     <div className=" py-6 grid grid-cols-1 md:grid-cols-3 gap-5">
       <AdminSummaryCard
-        slug="admin?filter=paid_online"
+        slug="/admin?filter=paid_online"
         title="Today's Online"
-        amount={todayOnline}
+        amount={todayRevenue.paidOnline}
       />
       <AdminSummaryCard
-        slug="admin?filter=paid_cash"
+        slug="/admin?filter=paid_cash"
         title="Today's Cash"
-        amount={todayCash}
+        amount={todayRevenue.paidCash}
       />
       <AdminSummaryCard
-        slug="admin?filter=paid_user"
+        slug="/admin?filter=paid_user"
         title="Today's Lending"
-        amount={todayLending}
+        amount={todayRevenue.lendingAmount}
       />
     </div>
   );

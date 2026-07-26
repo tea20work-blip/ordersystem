@@ -1,7 +1,6 @@
 import db from "@/db";
-import { dish, order, orderItem } from "@/db/schema";
-import { and, desc, eq, gte, lt, ne, sql } from "drizzle-orm";
-import { unstable_cache } from "next/cache";
+import { order, orderItem } from "@/db/schema";
+import { and, desc, eq, gte, lt, ne, sql, type SQL } from "drizzle-orm";
 
 export type TopOrderedDish = {
   dishId: number | null;
@@ -19,25 +18,36 @@ export async function getTodayRevenue() {
   const endOfDay = new Date();
   endOfDay.setHours(23, 59, 59, 999);
 
-  const results = await db
+  const [results] = await db
     .select({
-      totalPricing: order.totalPricing,
-      paidOnline: order.paidOnline,
-      paidCash: order.paidCash,
-      lendingAmount: order.lendingAmount,
+      paidOnline: sql<number>`COALESCE(SUM(${order.paidOnline}), 0)`,
+      paidCash: sql<number>`COALESCE(SUM(${order.paidCash}), 0)`,
+      lendingAmount: sql<number>`COALESCE(SUM(${order.lendingAmount}), 0)`,
     })
     .from(order)
     .where(
-      and(gte(order.createdAt, startOfDay), lt(order.createdAt, endOfDay)),
+      and(
+        gte(order.createdAt, startOfDay),
+        lt(order.createdAt, endOfDay),
+        ne(order.status, "cancelled"),
+      ),
     );
-  return results;
+
+  return {
+    paidOnline: Number(results?.paidOnline || 0),
+    paidCash: Number(results?.paidCash || 0),
+    lendingAmount: Number(results?.lendingAmount || 0),
+  };
 }
 
-export async function getTodayTopOrderedDishes(whereClause: any, durationType? : "day" | "week" | "month" ): Promise<TopOrderedDish[]> {
-  let startDate = new Date();
+export async function getTodayTopOrderedDishes(
+  whereClause: SQL[],
+  durationType?: "day" | "week" | "month",
+): Promise<TopOrderedDish[]> {
+  const startDate = new Date();
   startDate.setHours(0, 0, 0, 0);
 
-  let endDate = new Date();
+  const endDate = new Date();
   endDate.setHours(23, 59, 59, 999);
 
   if (durationType === "week") {

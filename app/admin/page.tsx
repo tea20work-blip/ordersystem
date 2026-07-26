@@ -2,8 +2,7 @@ import { getImageUrl } from "@/lib/s3";
 import { getTodayTopOrderedDishes } from "../actions/dashboard";
 import AdminSummary from "./AdminSummary";
 import { order } from "@/db/schema";
-import db from "@/db";
-import { and, eq, gte, lt, ne, sum } from "drizzle-orm";
+import { eq, gt, type SQL } from "drizzle-orm";
 import { AdminOrderTypeSummary } from "./AdminOrderTypeSummary";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
@@ -16,11 +15,9 @@ export default async function AdminPage({
   searchParams: { filter?: string; duration?: "day" | "week" | "month" };
 }) {
   const { filter, duration = "day" } = await searchParams;
-  let isFilter = false;
-  const whereCaluse = [];
+  const whereCaluse: SQL[] = [];
 
   if (filter) {
-    isFilter = true;
     switch (filter) {
       case "dine_in":
         whereCaluse.push(eq(order.orderType, "dine_in"));
@@ -32,13 +29,13 @@ export default async function AdminPage({
         whereCaluse.push(eq(order.orderType, "delivery"));
         break;
       case "paid_online":
-        whereCaluse.push(eq(order.status, "paid_online"));
+        whereCaluse.push(gt(order.paidOnline, 0));
         break;
       case "paid_cash":
-        whereCaluse.push(eq(order.status, "paid_cash"));
+        whereCaluse.push(gt(order.paidCash, 0));
         break;
       case "paid_user":
-        whereCaluse.push(eq(order.status, "paid_user"));
+        whereCaluse.push(gt(order.lendingAmount, 0));
         break;
     }
   }
@@ -83,7 +80,7 @@ export default async function AdminPage({
       </Suspense>
 
       <div className=" flex gap-4 justify-between">
-        <h1 className="text-2xl font-bold mb-4">Today's Ordered Dishes</h1>
+        <h1 className="text-2xl font-bold mb-4">Today&apos;s Ordered Dishes</h1>
         <p className="text-lg">₹ {totalDishRevenue} / - </p>
       </div>
       {filter && (
@@ -153,7 +150,7 @@ export default async function AdminPage({
         </table>
       </div>
       <div className=" flex gap-4 mt-10 justify-between">
-        <h1 className="text-2xl font-bold mb-6">Today's Ordered Cigrates</h1>
+        <h1 className="text-2xl font-bold mb-6">Today&apos;s Ordered Cigrates</h1>
         <p className="text-lg">₹ {totalCegrateRevenue} / -</p>
       </div>
       <div className="overflow-x-auto bg-white border border-gray-200 shadow-sm rounded-lg">

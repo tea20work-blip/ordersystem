@@ -1,6 +1,6 @@
 import db from "@/db";
 import { order } from "@/db/schema";
-import { and, gte, lt, ne, sum } from "drizzle-orm";
+import { and, gte, lt, ne, sql } from "drizzle-orm";
 import Link from "next/link";
 import React from "react";
 
@@ -14,7 +14,7 @@ export const AdminOrderTypeSummary = async () => {
   const orderData = await db
     .select({
       type: order.orderType,
-      totalAmount: sum(order.totalPricing),
+      totalAmount: sql<number>`COALESCE(SUM(${order.totalPricing}), 0)`,
     })
     .from(order)
     .where(
@@ -26,11 +26,13 @@ export const AdminOrderTypeSummary = async () => {
     )
     .groupBy(order.orderType);
 
-  const dineIn = orderData.find((o) => o.type === "dine_in")?.totalAmount || 0;
+  const dineIn = Number(
+    orderData.find((o) => o.type === "dine_in")?.totalAmount || 0,
+  );
   const takeaway =
-    orderData.find((o) => o.type === "take_away")?.totalAmount || 0;
+    Number(orderData.find((o) => o.type === "take_away")?.totalAmount || 0);
   const delivery =
-    orderData.find((o) => o.type === "delivery")?.totalAmount || 0;
+    Number(orderData.find((o) => o.type === "delivery")?.totalAmount || 0);
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
       <Link
