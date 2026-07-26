@@ -8,6 +8,7 @@ import { AdminOrderTypeSummary } from "./AdminOrderTypeSummary";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function AdminPage({
   searchParams,
@@ -117,7 +118,9 @@ export default async function AdminPage({
               <tr key={dish.dishId}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {dish.imageUrl ? (
-                    <img
+                    <Image
+                      width={48}
+                      height={48}
                       src={getImageUrl(dish.imageUrl)}
                       alt={dish.name}
                       className="w-12 h-12 object-cover rounded"
@@ -176,7 +179,9 @@ export default async function AdminPage({
               <tr key={dish.dishId}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {dish.imageUrl ? (
-                    <img
+                    <Image
+                      width={48}
+                      height={48}
                       src={getImageUrl(dish.imageUrl)}
                       alt={dish.name}
                       className="w-12 h-12 object-cover rounded"

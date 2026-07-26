@@ -17,6 +17,7 @@ import { Eye, Plus, Minus, Trash2, Search } from "lucide-react";
 import { getImageUrl } from "@/lib/s3";
 import { z } from "zod";
 import { userDetailsSchema } from "@/zod/userDetailsSchema";
+import Image from "next/image";
 
 export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: () => void }) {
     const [open, setOpen] = useState(false);
@@ -362,7 +363,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                         <tr key={item.id} className="bg-card">
                                             <td className="p-3">
                                                 {item.imageUrl ? (
-                                                    <img src={getImageUrl(item.imageUrl)} alt={item.dishName} className="w-10 h-10 rounded object-cover" />
+                                                    <Image width={40} height={40} src={getImageUrl(item.imageUrl)} alt={item.dishName} className="w-10 h-10 rounded object-cover" />
                                                 ) : (
                                                     <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-[10px]">No Img</div>
                                                 )}

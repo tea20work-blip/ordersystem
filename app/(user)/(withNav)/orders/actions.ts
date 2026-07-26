@@ -25,12 +25,16 @@ export async function fetchOrdersByMobileAction(mobile: string) {
         status: order.status,
         createdAt: order.createdAt,
         deliveryStatus: order.deliveryStatus,
-        // tableCode: table.tableCode,
+        orderType: order.orderType,
+        customerName: user.name,
+        tableName: table.name,
+        tableCode: table.tableCode,
         paidOnline: order.paidOnline,
         paidCash: order.paidCash,
       })
       .from(order)
-      // .leftJoin(table, eq(order.tableId, table.id))
+      .leftJoin(user, eq(order.userId, user.id))
+      .leftJoin(table, eq(order.tableId, table.id))
       .where(eq(order.userId, userId))
       .orderBy(desc(order.createdAt))
       .limit(7);
@@ -49,6 +53,7 @@ export async function fetchOrdersByMobileAction(mobile: string) {
     const formattedOrders = orders.map((o) => {
       return {
         ...o,
+        tableNumber: o.tableName || "Takeaway",
         items: items.filter((i) => i.orderId === o.id),
       };
     });
@@ -70,12 +75,16 @@ export async function fetchOrdersByOrderIdAction(orderId: number) {
         status: order.status,
         createdAt: order.createdAt,
         deliveryStatus: order.deliveryStatus,
-
-        // tableCode: table.tableCode,
+        orderType: order.orderType,
+        customerName: user.name,
+        tableName: table.name,
+        tableCode: table.tableCode,
         paidOnline: order.paidOnline,
         paidCash: order.paidCash,
       })
       .from(order)
+      .leftJoin(user, eq(order.userId, user.id))
+      .leftJoin(table, eq(order.tableId, table.id))
       .where(eq(order.id, orderId))
       .orderBy(desc(order.createdAt))
       .limit(7);
@@ -94,6 +103,7 @@ export async function fetchOrdersByOrderIdAction(orderId: number) {
     const formattedOrders = orders.map((o) => {
       return {
         ...o,
+        tableNumber: o.tableName || "Takeaway",
         items: items.filter((i) => i.orderId === o.id),
       };
     });

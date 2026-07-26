@@ -29,128 +29,148 @@ export function OrdersPage() {
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
 
-  const downloadBill = (order: any) => {
-    import("jspdf").then(({ jsPDF }) => {
-      const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: [160, 200],
+  const downloadBill = async (order: any) => {
+    const { jsPDF } = await import("jspdf");
+
+    const loadImageAsDataUrl = async (url: string) => {
+      const response = await fetch(url);
+      const blob = await response.blob();
+
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
       });
+    };
 
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("Tea 20 cafe", 80, 10, { align: "center" });
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text("Gyan Vihar Marg, Jaipur, Raj.", 80, 15, { align: "center" });
-
-      doc.text(
-        "--------------------------------------------------------------------------------------------------------------------------------",
-        80,
-        20,
-        { align: "center" },
-      );
-      doc.text("RECEIPT", 80, 25, { align: "center" });
-      doc.text(
-        "--------------------------------------------------------------------------------------------------------------------------------",
-        80,
-        30,
-        { align: "center" },
-      );
-
-      doc.text(`Name: ${order.customerName || "Customer"}`, 5, 35);
-      doc.text(`Invoice No: ${order.id}`, 155, 35, { align: "right" });
-
-      doc.text(`Table: ${order.tableNumber || "N/A"}`, 5, 40);
-      const date = order.createdAt
-        ? new Date(order.createdAt).toLocaleDateString()
-        : new Date().toLocaleDateString();
-      doc.text(`Date: ${date}`, 155, 40, { align: "right" });
-
-      doc.text(
-        "--------------------------------------------------------------------------------------------------------------------------------",
-        80,
-        45,
-        { align: "center" },
-      );
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Item", 5, 50);
-      doc.text("Price", 115, 50, { align: "right" });
-      doc.text("Qty", 125, 50, { align: "center" });
-      doc.text("Total", 155, 50, { align: "right" });
-
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        "--------------------------------------------------------------------------------------------------------------------------------",
-        80,
-        55,
-        { align: "center" },
-      );
-
-      let y = 60;
-      order.items?.forEach((item: any) => {
-        let itemName = item.dishName;
-        if (item.options && item.options.length > 0) {
-          itemName += ` (${item.options.map((o: any) => o.name).join(", ")})`;
-        }
-
-        const splitTitle = doc.splitTextToSize(itemName, 35);
-        for (let i = 0; i < splitTitle.length; i++) {
-          doc.text(splitTitle[i], 5, y);
-          if (i === 0) {
-            doc.text(`Rs. ${item.pricing}`, 115, y, { align: "right" });
-            doc.text(`${item.quantity}`, 125, y, { align: "center" });
-            doc.text(`Rs. ${item.pricing * item.quantity}`, 155, y, {
-              align: "right",
-            });
-          }
-          y += 5;
-        }
-      });
-
-      doc.text(
-        "--------------------------------------------------------------------------------------------------------------------------------",
-        80,
-        y,
-        { align: "center" },
-      );
-      y += 5;
-
-      doc.text("Sub-Total:", 115, y, { align: "right" });
-      doc.text(`Rs. ${order.totalPricing}`, 155, y, { align: "right" });
-      y += 5;
-
-      doc.text("CGST:", 115, y, { align: "right" });
-      doc.text("0% Rs. 0", 155, y, { align: "right" });
-      y += 5;
-
-      doc.text("SGST:", 115, y, { align: "right" });
-      doc.text("0% Rs. 0", 155, y, { align: "right" });
-      y += 5;
-
-      doc.text("---------------------------", 155, y, { align: "right" });
-      y += 5;
-
-      doc.text(`Mode: ${order.paymentMethod || "Cash"}`, 5, y);
-      doc.setFont("helvetica", "bold");
-      doc.text(`Total: Rs. ${order.totalPricing}`, 155, y, { align: "right" });
-      doc.setFont("helvetica", "normal");
-
-      y += 10;
-      doc.text(
-        "--------------------------------------------------------------------------------------------------------------------------------",
-        80,
-        y,
-        { align: "center" },
-      );
-      y += 5;
-      doc.text("**SAVE PAPER SAVE NATURE !!**", 80, y, { align: "center" });
-      y += 5;
-
-      doc.save(`bill-${order.id}.pdf`);
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: [160, 200],
     });
+
+    const logoUrl = "https://d2t6059p6jfvt4.cloudfront.net/t20/t20-logo.jpg";
+
+    const pageWidth = 160;
+    const margin = 6;
+    const right = pageWidth - margin;
+
+    const date = order.createdAt
+      ? new Date(order.createdAt).toLocaleDateString()
+      : new Date().toLocaleDateString();
+
+    try {
+      const logo = await loadImageAsDataUrl(logoUrl);
+      doc.addImage(logo, "JPEG", margin, 6, 18, 18);
+    } catch {
+      // Continue without logo if the image cannot be loaded.
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Tea 20 cafe", 28, 12);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Gyan Vihar Marg, Jaipur, Raj.", 28, 17);
+
+    doc.text(`Invoice No: ${order.id}`, right, 12, { align: "right" });
+    doc.text(`Date: ${date}`, right, 17, { align: "right" });
+
+    doc.setDrawColor(210, 210, 210);
+    doc.setLineWidth(0.25);
+    doc.line(margin, 28, right, 28);
+
+    // Customer details section
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Name: ${order.customerName || "Customer"}`, margin, 36);
+    doc.text(`Table: ${order.tableNumber || "N/A"}`, margin, 42);
+
+    doc.line(margin, 50, right, 50);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Item", margin, 57);
+    doc.text("Price", 115, 57, { align: "right" });
+    doc.text("Qty", 125, 57, { align: "center" });
+    doc.text("Total", right, 57, { align: "right" });
+
+    doc.setFont("helvetica", "normal");
+    doc.line(margin, 62, right, 62);
+
+    let y = 69;
+
+    order.items?.forEach((item: any) => {
+      let itemName = item.dishName;
+
+      if (item.options && item.options.length > 0) {
+        itemName += ` (${item.options.map((o: any) => o.name).join(", ")})`;
+      }
+
+      const splitTitle = doc.splitTextToSize(itemName, 45);
+
+      for (let i = 0; i < splitTitle.length; i++) {
+        doc.text(splitTitle[i], margin, y);
+
+        if (i === 0) {
+          doc.text(`Rs. ${item.pricing}`, 115, y, { align: "right" });
+          doc.text(`${item.quantity}`, 125, y, { align: "center" });
+          doc.text(`Rs. ${item.pricing * item.quantity}`, right, y, {
+            align: "right",
+          });
+        }
+
+        y += 5;
+      }
+    });
+
+    doc.line(margin, y, right, y);
+    y += 7;
+
+    doc.text("Sub-Total:", 115, y, { align: "right" });
+    doc.text(`Rs. ${order.totalPricing}`, right, y, { align: "right" });
+    y += 5;
+
+    doc.text("CGST:", 115, y, { align: "right" });
+    doc.text("0% Rs. 0", right, y, { align: "right" });
+    y += 5;
+
+    doc.text("SGST:", 115, y, { align: "right" });
+    doc.text("0% Rs. 0", right, y, { align: "right" });
+    y += 5;
+
+    doc.line(120, y, right, y);
+    y += 5;
+
+    doc.text(`Total: Rs. ${order.totalPricing}`, right, y, { align: "right" });
+    doc.setFont("helvetica", "normal");
+
+    y += 10;
+    doc.line(margin, y, right, y);
+    y += 6;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("SAVE PAPER SAVE NATURE !!", pageWidth / 2, y, {
+      align: "center",
+    });
+
+    y += 6;
+    doc.setFontSize(9);
+    doc.text("Home Delivery Available!", pageWidth / 2, y, {
+      align: "center",
+    });
+
+    y += 5;
+    doc.setFont("helvetica", "normal");
+
+    const deliveryText =
+      "If you're within a 2 km radius, place your order by calling or WhatsApp us at 9786987698. Delivery charge: Rs. 50. Free delivery on orders above Rs. 600.";
+
+    const deliveryLines = doc.splitTextToSize(deliveryText, 140);
+    doc.text(deliveryLines, pageWidth / 2, y, { align: "center" });
+
+    doc.save(`bill-${order.id}.pdf`);
   };
 
   const handleSearch = async (e: React.FormEvent) => {

@@ -12,6 +12,7 @@ import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cart";
 import { getImageUrl } from "@/lib/s3";
+import Image from "next/image";
 
 export function ClientMenu({
   initialDishes,
@@ -147,7 +148,9 @@ export function ClientMenu({
                   className="snap-center shrink-0 w-[85%] md:w-[60%] block group"
                 >
                   <div className="rounded-xl overflow-hidden shadow-sm mb-2 border">
-                    <img
+                    <Image
+                      width={1200}
+                      height={675}
                       src={getImageUrl(poster.posterImage)}
                       alt={poster.posterName}
                       className="w-full h-auto aspect-[16/9] object-cover"

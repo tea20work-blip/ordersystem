@@ -9,6 +9,7 @@ import { DeletePosterButton } from "@/components/delete-poster-button";
 import { getImageUrl } from "@/lib/s3";
 import { toast } from "sonner";
 import { updatePosterPriorities } from "../actions/poster";
+import Image from "next/image";
 import {
     DndContext,
     closestCenter,
@@ -82,9 +83,11 @@ function SortableTableRow({ poster }: SortableTableRowProps) {
             <TableCell className="font-medium">{poster.priority}</TableCell>
             <TableCell>
                 <div className="h-16 w-16 relative rounded overflow-hidden bg-gray-100 border">
-                    <img 
-                        src={getImageUrl(poster.posterImage)} 
-                        alt={poster.posterName} 
+                    <Image
+                        width={64}
+                        height={64}
+                        src={getImageUrl(poster.posterImage)}
+                        alt={poster.posterName}
                         className="object-cover w-full h-full"
                     />
                 </div>

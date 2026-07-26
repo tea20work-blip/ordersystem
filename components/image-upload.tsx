@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
+import Image from "next/image";
 
 export function ImageUpload({ defaultValue, name = "imageFile" }: { defaultValue?: string, name?: string }) {
     const [preview, setPreview] = useState<string | null>(defaultValue || null);
@@ -28,7 +29,7 @@ export function ImageUpload({ defaultValue, name = "imageFile" }: { defaultValue
         <div className="space-y-4">
             {preview ? (
                 <div className="relative w-40 h-40 border rounded-lg overflow-hidden group">
-                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                    <Image width={160} height={160} src={preview} alt="Preview" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <Button type="button" variant="destructive" size="icon" onClick={handleRemove}>
                             <X className="h-4 w-4" />

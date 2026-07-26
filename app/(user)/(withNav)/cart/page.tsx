@@ -164,20 +164,6 @@ function CartItem({ item, updateQuantity, removeItem }: any) {
     const optionsPrice = item.selectedOptions?.reduce((sum: number, opt: any) => sum + opt.price, 0) || 0;
     return (
         <div key={item.cartItemId} className="p-4 sm:p-6 flex flex-row gap-4 sm:gap-6 justify-between sm:items-center transition-colors hover:bg-muted/10">
-            {/* <div className="w-24 h-24 rounded-lg bg-muted shrink-0 overflow-hidden">
-                {item.dish.imageUrl ? (
-                    <img
-                        src={getImageUrl(item.dish.imageUrl)}
-                        alt={item.dish.name}
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground text-center p-2">
-                        No Image
-                    </div>
-                )}
-            </div> */}
-
             <div className=" w-full">
                 <h4 className="font-semibold text-lg truncate">{item.dish.name}</h4>
                 {item.selectedOptions && item.selectedOptions.length > 0 && (
