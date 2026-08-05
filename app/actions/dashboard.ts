@@ -44,6 +44,7 @@ export async function getRevenue(durationType: DashboardDuration = "day") {
         gte(order.createdAt, startDate),
         lt(order.createdAt, endDate),
         ne(order.status, "cancelled"),
+        gte(order.totalPricing, 0)
       ),
     );
 

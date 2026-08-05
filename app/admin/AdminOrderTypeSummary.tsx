@@ -22,6 +22,7 @@ export const AdminOrderTypeSummary = async ({
         gte(order.createdAt, startDate),
         lt(order.createdAt, endDate),
         ne(order.status, "cancelled"),
+        gte(order.totalPricing, 0),
       ),
     )
     .groupBy(order.orderType);
