@@ -1,26 +1,29 @@
 import React from "react";
-import { getTodayRevenue } from "../actions/dashboard";
+import { DashboardDuration, getRevenue } from "../actions/dashboard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import Link from "next/link";
 
-const AdminSummary = async () => {
-  const todayRevenue = await getTodayRevenue();
+const summaryTitle: Record<DashboardDuration, string> = {
+  day: "Today's",
+  week: "This Week's",
+  month: "This Month's",
+};
+
+const AdminSummary = async ({ duration }: { duration: DashboardDuration }) => {
+  const revenue = await getRevenue(duration);
+
   return (
     <div className=" py-6 grid grid-cols-1 md:grid-cols-3 gap-5">
       <AdminSummaryCard
-        slug="/admin?filter=paid_online"
-        title="Today's Online"
-        amount={todayRevenue.paidOnline}
+        title={`${summaryTitle[duration]} Online`}
+        amount={revenue.paidOnline}
       />
       <AdminSummaryCard
-        slug="/admin?filter=paid_cash"
-        title="Today's Cash"
-        amount={todayRevenue.paidCash}
+        title={`${summaryTitle[duration]} Cash`}
+        amount={revenue.paidCash}
       />
       <AdminSummaryCard
-        slug="/admin?filter=paid_user"
-        title="Today's Lending"
-        amount={todayRevenue.lendingAmount}
+        title={`${summaryTitle[duration]} Lending`}
+        amount={revenue.lendingAmount}
       />
     </div>
   );
@@ -29,20 +32,16 @@ const AdminSummary = async () => {
 export default AdminSummary;
 
 function AdminSummaryCard({
-  slug,
   title,
   amount,
 }: {
-  slug: string;
   title: string;
   amount: number;
 }) {
   return (
-    <Card className=" bg-white">
-      <Link prefetch={false} href={slug}>
-        <CardHeader className="text-2xl font-bold">{title}</CardHeader>
-        <CardContent className="text-lg">₹ {amount} / -</CardContent>
-      </Link>
+    <Card className=" bg-white gap-1">
+      <CardHeader className="">{title}</CardHeader>
+      <CardContent className="text-2xl font-semibold">₹ {amount}</CardContent>
     </Card>
   );
 }

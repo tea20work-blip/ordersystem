@@ -1,15 +1,15 @@
 import db from "@/db";
 import { order } from "@/db/schema";
+import { DashboardDuration, getDashboardDateRange } from "../actions/dashboard";
 import { and, gte, lt, ne, sql } from "drizzle-orm";
-import Link from "next/link";
 import React from "react";
 
-export const AdminOrderTypeSummary = async () => {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+export const AdminOrderTypeSummary = async ({
+  duration,
+}: {
+  duration: DashboardDuration;
+}) => {
+  const { startDate, endDate } = getDashboardDateRange(duration);
 
   const orderData = await db
     .select({
@@ -19,8 +19,8 @@ export const AdminOrderTypeSummary = async () => {
     .from(order)
     .where(
       and(
-        gte(order.createdAt, startOfDay),
-        lt(order.createdAt, endOfDay),
+        gte(order.createdAt, startDate),
+        lt(order.createdAt, endDate),
         ne(order.status, "cancelled"),
       ),
     )
@@ -29,42 +29,32 @@ export const AdminOrderTypeSummary = async () => {
   const dineIn = Number(
     orderData.find((o) => o.type === "dine_in")?.totalAmount || 0,
   );
-  const takeaway =
-    Number(orderData.find((o) => o.type === "take_away")?.totalAmount || 0);
-  const delivery =
-    Number(orderData.find((o) => o.type === "delivery")?.totalAmount || 0);
+  const takeaway = Number(
+    orderData.find((o) => o.type === "take_away")?.totalAmount || 0,
+  );
+  const delivery = Number(
+    orderData.find((o) => o.type === "delivery")?.totalAmount || 0,
+  );
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
-      <Link
-        prefetch={false}
-        href={"/admin?filter=dine_in"}
-        className="bg-white cursor-pointer p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center"
-      >
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
         <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
           Dine In
         </p>
         <p className="text-3xl font-bold mt-2 text-purple-600">{dineIn}</p>
-      </Link>
-      <Link
-        prefetch={false}
-        href={"/admin?filter=take_away"}
-        className="bg-white cursor-pointer p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center"
-      >
+      </div>
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
         <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
           Takeaway
         </p>
         <p className="text-3xl font-bold mt-2 text-blue-600">{takeaway}</p>
-      </Link>
-      <Link
-        prefetch={false}
-        href={"/admin?filter=delivery"}
-        className="bg-white cursor-pointer p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center"
-      >
+      </div>
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
         <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
           Delivery
         </p>
         <p className="text-3xl font-bold mt-2 text-orange-600">{delivery}</p>
-      </Link>
+      </div>
     </div>
   );
 };

@@ -11,12 +11,26 @@ export type TopOrderedDish = {
   totalPrice: number;
 };
 
-export async function getTodayRevenue() {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+export type DashboardDuration = "day" | "week" | "month";
 
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+export function getDashboardDateRange(durationType: DashboardDuration = "day") {
+  const startDate = new Date();
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date();
+  endDate.setHours(23, 59, 59, 999);
+
+  if (durationType === "week") {
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+  } else if (durationType === "month") {
+    startDate.setDate(1);
+  }
+
+  return { startDate, endDate };
+}
+
+export async function getRevenue(durationType: DashboardDuration = "day") {
+  const { startDate, endDate } = getDashboardDateRange(durationType);
 
   const [results] = await db
     .select({
@@ -27,8 +41,8 @@ export async function getTodayRevenue() {
     .from(order)
     .where(
       and(
-        gte(order.createdAt, startOfDay),
-        lt(order.createdAt, endOfDay),
+        gte(order.createdAt, startDate),
+        lt(order.createdAt, endDate),
         ne(order.status, "cancelled"),
       ),
     );
@@ -42,19 +56,9 @@ export async function getTodayRevenue() {
 
 export async function getTodayTopOrderedDishes(
   whereClause: SQL[],
-  durationType?: "day" | "week" | "month",
+  durationType: DashboardDuration = "day",
 ): Promise<TopOrderedDish[]> {
-  const startDate = new Date();
-  startDate.setHours(0, 0, 0, 0);
-
-  const endDate = new Date();
-  endDate.setHours(23, 59, 59, 999);
-
-  if (durationType === "week") {
-    startDate.setDate(startDate.getDate() - startDate.getDay()); // Start of the week (Sunday)
-  } else if (durationType === "month") {
-    startDate.setDate(1); // First day of the month
-  }
+  const { startDate, endDate } = getDashboardDateRange(durationType);
 
   const results = await db
     .select({
