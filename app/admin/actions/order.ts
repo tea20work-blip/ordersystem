@@ -1,17 +1,52 @@
 "use server";
 
 import db from "@/db";
-import { order, user, table, orderItem, dish } from "@/db/schema";
-import { eq, desc, sql, inArray } from "drizzle-orm";
+import { order, user, table, orderItem } from "@/db/schema";
+import { and, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 
-export async function getOrders(page: number = 1, limit: number = 10) {
+export type OrderPaymentStatus = 'pending' | 'completed' | 'cancelled' | 'paid_online' | 'paid_cash' | 'paid_user';
+export type OrderDeliveryStatus = 'ordered' | 'ready' | 'dispatched' | 'delivered';
+export type AdminOrderType = 'dine_in' | 'take_away' | 'delivery';
+
+export type OrderFilters = {
+    startDate?: string;
+    endDate?: string;
+    orderType?: AdminOrderType;
+    payment?: OrderPaymentStatus;
+};
+
+type OrderItemOptions = Record<string, unknown>[];
+
+export async function getOrders(page: number = 1, limit: number = 10, filters: OrderFilters = {}) {
     const offset = (page - 1) * limit;
+    const whereClause: SQL[] = [];
+
+    if (filters.startDate) {
+        whereClause.push(sql`DATE(${order.createdAt}) >= ${filters.startDate}::date`);
+    }
+
+    if (filters.endDate) {
+        whereClause.push(sql`DATE(${order.createdAt}) <= ${filters.endDate}::date`);
+    }
+
+    if (filters.orderType) {
+        whereClause.push(eq(order.orderType, filters.orderType));
+    }
+
+    if (filters.payment) {
+        whereClause.push(eq(order.status, filters.payment));
+    }
+
+    const where = whereClause.length > 0 ? and(...whereClause) : undefined;
 
     const orders = await db
         .select({
             id: order.id,
             totalPricing: order.totalPricing,
+            paidOnline: order.paidOnline,
+            paidCash: order.paidCash,
+            lendingAmount: order.lendingAmount,
             status: order.status,
             deliveryStatus: order.deliveryStatus,
             orderType: order.orderType,
@@ -27,11 +62,12 @@ export async function getOrders(page: number = 1, limit: number = 10) {
         .from(order)
         .leftJoin(table, eq(order.tableId, table.id))
         .leftJoin(user, eq(order.userId, user.id))
+        .where(where)
         .orderBy(desc(order.createdAt))
         .limit(limit)
         .offset(offset);
 
-    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(order);
+    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(order).where(where);
     const total = Number(totalResult[0]?.count || 0);
 
     return {
@@ -59,14 +95,38 @@ export async function getOrderDetails(orderId: number) {
     return items;
 }
 
-export async function updateOrderStatus(orderId: number, status: 'pending' | 'completed' | 'cancelled') {
+export async function updateOrderStatus(orderId: number, status: OrderPaymentStatus) {
+    const [currentOrder] = await db
+        .select({
+            totalPricing: order.totalPricing,
+            paidOnline: order.paidOnline,
+            paidCash: order.paidCash,
+            lendingAmount: order.lendingAmount,
+        })
+        .from(order)
+        .where(eq(order.id, orderId))
+        .limit(1);
+
+    if (!currentOrder) {
+        throw new Error("Order not found");
+    }
+
     await db.update(order)
-        .set({ status })
+        .set({
+            status,
+            isRunning: status === "pending",
+            paidOnline: status === "paid_online" ? currentOrder.totalPricing : status === "completed" ? currentOrder.paidOnline : 0,
+            paidCash: status === "paid_cash" ? currentOrder.totalPricing : status === "completed" ? currentOrder.paidCash : 0,
+            lendingAmount: status === "paid_user" ? currentOrder.totalPricing : status === "completed" ? currentOrder.lendingAmount : 0,
+        })
         .where(eq(order.id, orderId));
     revalidatePath("/admin/orders");
+    revalidatePath("/admin/tables");
+    revalidatePath("/admin/user");
+    revalidateTag("today-top-ordered-dishes", "max");
 }
 
-export async function updateDeliveryStatus(orderId: number, deliveryStatus: 'ordered' | 'ready' | 'delivered') {
+export async function updateDeliveryStatus(orderId: number, deliveryStatus: OrderDeliveryStatus) {
     await db.update(order)
         .set({ deliveryStatus })
         .where(eq(order.id, orderId));
@@ -157,7 +217,7 @@ export async function updateOrderAdvanced(orderId: number, data: {
     revalidateTag("today-top-ordered-dishes", "max");
 }
 
-export async function createAdminOrder(data: { tableId?: number | null, userId?: number | null, lendingUserId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, name?: string, imageUrl?: string, options?: any[] }[] }) {
+export async function createAdminOrder(data: { tableId?: number | null, userId?: number | null, lendingUserId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, name?: string, imageUrl?: string, options?: OrderItemOptions }[] }) {
     const [newOrder] = await db.insert(order).values({
         tableId: data.tableId || null,
         userId: data.userId || null,
@@ -220,7 +280,7 @@ export async function getRunningOrdersByTable(tableId: number) {
     }));
 }
 
-export async function updateOrderItemsList(orderId: number, items: { id?: number, dishId?: number, cegrateId?: number, quantity: number, pricing: number, dishName: string, imageUrl?: string, options?: any[] }[]) {
+export async function updateOrderItemsList(orderId: number, items: { id?: number, dishId?: number, cegrateId?: number, quantity: number, pricing: number, dishName: string, imageUrl?: string, options?: OrderItemOptions }[]) {
     await db.transaction(async (tx) => {
         // First delete all existing items
         await tx.delete(orderItem).where(eq(orderItem.orderId, orderId));

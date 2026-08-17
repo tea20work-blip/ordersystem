@@ -1,18 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { updateDeliveryStatus } from "../actions/order";
+import {
+    updateDeliveryStatus,
+    type OrderDeliveryStatus,
+} from "../actions/order";
 
-export function DeliveryStatusSelect({ orderId, initialStatus }: { orderId: number, initialStatus: string }) {
+export function DeliveryStatusSelect({
+    orderId,
+    initialStatus,
+    onUpdated,
+}: {
+    orderId: number,
+    initialStatus: OrderDeliveryStatus,
+    onUpdated?: () => void;
+}) {
     const [status, setStatus] = useState(initialStatus || 'ordered');
     const [loading, setLoading] = useState(false);
 
     const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newStatus = e.target.value;
+        const newStatus = e.target.value as OrderDeliveryStatus;
         setStatus(newStatus);
         setLoading(true);
         try {
-            await updateDeliveryStatus(orderId, newStatus as any);
+            await updateDeliveryStatus(orderId, newStatus);
+            onUpdated?.();
         } catch (error) {
             console.error(error);
             setStatus(initialStatus || 'ordered'); // Revert on error
@@ -23,6 +35,7 @@ export function DeliveryStatusSelect({ orderId, initialStatus }: { orderId: numb
 
     let colorClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
     if (status === 'delivered') colorClass = 'bg-green-100 text-green-800 border-green-200';
+    else if (status === 'dispatched') colorClass = 'bg-orange-100 text-orange-800 border-orange-200';
     else if (status === 'ready') colorClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
     else if (status === 'ordered') colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
 
@@ -36,6 +49,7 @@ export function DeliveryStatusSelect({ orderId, initialStatus }: { orderId: numb
         >
             <option value="ordered" className="bg-background text-foreground">ordered</option>
             <option value="ready" className="bg-background text-foreground">ready</option>
+            <option value="dispatched" className="bg-background text-foreground">dispatched</option>
             <option value="delivered" className="bg-background text-foreground">delivered</option>
         </select>
     );

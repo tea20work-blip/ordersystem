@@ -1,5 +1,7 @@
 "use client";
 
+import * as React from "react";
+import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -10,24 +12,101 @@ import {
 } from "@/components/ui/table";
 import { OrderDialogClient } from "./OrderDialogClient";
 import { DeliveryStatusSelect } from "./DeliveryStatusSelect";
+import { PaymentStatusSelect } from "./PaymentStatusSelect";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
+import type { DateRange } from "react-day-picker";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import type {
+  AdminOrderType,
+  OrderDeliveryStatus,
+  OrderPaymentStatus,
+} from "../actions/order";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+type AdminOrderRow = {
+  id: number;
+  totalPricing: number;
+  status: OrderPaymentStatus | null;
+  deliveryStatus: OrderDeliveryStatus | null;
+  orderType: AdminOrderType | null;
+  createdAt: string | Date | null;
+  tableName: string | null;
+  userName: string | null;
+  userNumber: string | null;
+  message: string | null;
+};
+
+type OrdersResponse = {
+  orders: AdminOrderRow[];
+  totalPages: number;
+  total: number;
+};
+
+const orderTypeOptions: { label: string; value: AdminOrderType }[] = [
+  { label: "Dine In", value: "dine_in" },
+  { label: "Takeaway", value: "take_away" },
+  { label: "Delivery", value: "delivery" },
+];
+
+const paymentOptions: { label: string; value: OrderPaymentStatus }[] = [
+  { label: "Pending", value: "pending" },
+  { label: "Mix", value: "completed" },
+  { label: "Paid Online", value: "paid_online" },
+  { label: "Paid Cash", value: "paid_cash" },
+  { label: "Paid User", value: "paid_user" },
+  { label: "Cancelled", value: "cancelled" },
+];
+
+const getOrderTypeLabel = (value?: string | null) =>
+  value ? orderTypeOptions.find((item) => item.value === value)?.label : "";
+
+const getPaymentLabel = (value?: string | null) =>
+  value ? paymentOptions.find((item) => item.value === value)?.label : "";
+
 export default function OrdersPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const page = Number(searchParams.get("page")) || 1;
+  const startDate = searchParams.get("startDate") || "";
+  const endDate = searchParams.get("endDate") || "";
+  const orderType = searchParams.get("orderType") || "";
+  const payment = searchParams.get("payment") || "";
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>({
+    from: startDate ? new Date(startDate) : undefined,
+    to: endDate ? new Date(endDate) : undefined,
+  });
   const limit = 10;
+  const apiParams = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
 
-  const { data, error, isLoading } = useSWR(
-    `/api/orders?page=${page}&limit=${limit}`,
+  if (startDate) apiParams.set("startDate", startDate);
+  if (endDate) apiParams.set("endDate", endDate);
+  if (orderType) apiParams.set("orderType", orderType);
+  if (payment) apiParams.set("payment", payment);
+
+  const { data, error, isLoading, mutate } = useSWR<OrdersResponse>(
+    `/api/orders?${apiParams.toString()}`,
     fetcher,
     {
-      refreshInterval: 15 * 1000, // 15 sec
+      refreshInterval: 30 * 1000, // 30 sec
       refreshWhenHidden: false,
       revalidateOnFocus: true,
     },
@@ -35,6 +114,51 @@ export default function OrdersPage() {
 
   const orders = data?.orders || [];
   const totalPages = data?.totalPages || 0;
+  const total = data?.total || 0;
+  const hasDateFilter = Boolean(startDate || endDate);
+  const hasFilters = Boolean(hasDateFilter || orderType || payment);
+
+  const pushFilters = ({
+    nextOrderType = orderType,
+    nextPayment = payment,
+    clearDate = false,
+  }: {
+    nextOrderType?: string;
+    nextPayment?: string;
+    clearDate?: boolean;
+  } = {}) => {
+    const params = new URLSearchParams();
+    params.set("page", "1");
+
+    if (!clearDate && dateRange?.from) {
+      params.set("startDate", format(dateRange.from, "yyyy-MM-dd"));
+    }
+
+    if (!clearDate && dateRange?.to) {
+      params.set("endDate", format(dateRange.to, "yyyy-MM-dd"));
+    }
+
+    if (nextOrderType) params.set("orderType", nextOrderType);
+    if (nextPayment) params.set("payment", nextPayment);
+
+    router.push(`/admin/orders?${params.toString()}`);
+  };
+
+  const clearFilters = () => {
+    setDateRange(undefined);
+    router.push("/admin/orders");
+  };
+
+  const getPageHref = (nextPage: number) => {
+    const params = new URLSearchParams();
+    params.set("page", String(nextPage));
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+    if (orderType) params.set("orderType", orderType);
+    if (payment) params.set("payment", payment);
+
+    return `/admin/orders?${params.toString()}`;
+  };
 
   if (error) {
     return <div className="p-4 text-red-500">Failed to load orders.</div>;
@@ -42,7 +166,121 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-md border bg-card p-4 shadow-sm">
+        <div className="grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto_auto] md:items-end">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Date Range</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant="outline"
+                  className={cn(
+                    "h-9 w-full justify-start text-left font-normal",
+                    !dateRange?.from && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd, y")} -{" "}
+                        {format(dateRange.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="orderType" className="text-sm font-medium">
+              Order Type
+            </label>
+            <select
+              id="orderType"
+              value={orderType}
+              onChange={(event) =>
+                pushFilters({ nextOrderType: event.target.value })
+              }
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            >
+              <option value="">All order types</option>
+              {orderTypeOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="payment" className="text-sm font-medium">
+              Payment
+            </label>
+            <select
+              id="payment"
+              value={payment}
+              onChange={(event) =>
+                pushFilters({ nextPayment: event.target.value })
+              }
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            >
+              <option value="">All payments</option>
+              {paymentOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button type="button" onClick={() => pushFilters()}>
+            Filter
+          </Button>
+          {hasFilters ? (
+            <Button type="button" variant="outline" onClick={clearFilters}>
+              <X className="h-4 w-4 mr-1" /> Clear
+            </Button>
+          ) : (
+            <Button type="button" variant="outline" disabled>
+              <X className="h-4 w-4 mr-1" /> Clear
+            </Button>
+          )}
+        </div>
+      </div>
       <div className="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between gap-4 border-b px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{total}</span>{" "}
+            orders
+          </p>
+          {hasFilters && (
+            <p className="text-sm text-muted-foreground">
+              Filtered by{" "}
+              {[
+                hasDateFilter
+                  ? [startDate, endDate].filter(Boolean).join(" - ")
+                  : "",
+                getOrderTypeLabel(orderType),
+                getPaymentLabel(payment),
+              ]
+                .filter(Boolean)
+                .join(", ")}
+            </p>
+          )}
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -52,7 +290,7 @@ export default function OrdersPage() {
               <TableHead>Type</TableHead>
               <TableHead>Table</TableHead>
               <TableHead>Total (₹)</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Payment Status</TableHead>
               <TableHead>Delivery Status</TableHead>
               <TableHead>Message</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -78,7 +316,7 @@ export default function OrdersPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((order: any) => (
+              orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">#{order.id}</TableCell>
                   <TableCell>
@@ -114,27 +352,22 @@ export default function OrdersPage() {
                     ₹ {order.totalPricing}
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        [
-                          "paid_online",
-                          "paid_cash",
-                          "paid_user",
-                          "completed",
-                        ].includes(order.status!)
-                          ? "bg-green-100 text-green-800"
-                          : order.status === "cancelled"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
+                    <PaymentStatusSelect
+                      orderId={order.id}
+                      initialStatus={
+                        (order.status || "pending") as OrderPaymentStatus
+                      }
+                      onUpdated={mutate}
+                    />
                   </TableCell>
                   <TableCell>
                     <DeliveryStatusSelect
                       orderId={order.id}
-                      initialStatus={order.deliveryStatus || "ordered"}
+                      initialStatus={
+                        (order.deliveryStatus ||
+                          "ordered") as OrderDeliveryStatus
+                      }
+                      onUpdated={mutate}
                     />
                   </TableCell>
                   <TableCell
@@ -167,7 +400,7 @@ export default function OrdersPage() {
                 asChild={page > 1}
               >
                 {page > 1 ? (
-                  <Link href={`/admin/orders?page=${page - 1}`}>
+                  <Link href={getPageHref(page - 1)}>
                     <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                   </Link>
                 ) : (
@@ -183,7 +416,7 @@ export default function OrdersPage() {
                 asChild={page < totalPages}
               >
                 {page < totalPages ? (
-                  <Link href={`/admin/orders?page=${page + 1}`}>
+                  <Link href={getPageHref(page + 1)}>
                     Next <ChevronRight className="h-4 w-4 ml-1" />
                   </Link>
                 ) : (
