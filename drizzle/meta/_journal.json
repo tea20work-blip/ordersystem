@@ -162,6 +162,13 @@
       "when": 1782654670079,
       "tag": "0022_amused_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791016434600,
+      "tag": "0023_admin_notifications",
+      "breakpoints": true
     }
   ]
 }

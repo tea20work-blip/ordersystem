@@ -1,8 +1,10 @@
 "use server";
 
 import db from "@/db";
-import { order, user, table, orderItem } from "@/db/schema";
+import { order, user, table, orderItem, adminNotification } from "@/db/schema";
 import { and, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { after } from "next/server";
+import { orderAlert, sendOrderPush } from "@/lib/order-notifications";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 export type OrderPaymentStatus = 'pending' | 'completed' | 'cancelled' | 'paid_online' | 'paid_cash' | 'paid_user';
@@ -218,29 +220,41 @@ export async function updateOrderAdvanced(orderId: number, data: {
 }
 
 export async function createAdminOrder(data: { tableId?: number | null, userId?: number | null, lendingUserId?: number | null, totalPricing: number, items: { dishId?: number, cegrateId?: number, quantity: number, pricing: number, name?: string, imageUrl?: string, options?: OrderItemOptions }[] }) {
-    const [newOrder] = await db.insert(order).values({
-        tableId: data.tableId || null,
-        userId: data.userId || null,
-        lendingUserId: data.lendingUserId || null,
-        totalPricing: data.totalPricing,
-        status: "pending",
-        orderType: data.tableId ? "dine_in" : "take_away",
-    }).returning({ id: order.id });
+    const alert = await db.transaction(async (tx) => {
+        const [newOrder] = await tx.insert(order).values({
+            tableId: data.tableId || null,
+            userId: data.userId || null,
+            lendingUserId: data.lendingUserId || null,
+            totalPricing: data.totalPricing,
+            status: "pending",
+            orderType: data.tableId ? "dine_in" : "take_away",
+        }).returning({ id: order.id });
 
-    if (data.items.length > 0) {
-        await db.insert(orderItem).values(
-            data.items.map(item => ({
-                orderId: newOrder.id,
-                dishId: item.dishId,
-                cegrateId: item.cegrateId,
-                quantity: item.quantity,
-                pricing: item.pricing,
-                options: item.options || [],
-                dishName: item.name || "",
-                dishImageUrl: item.imageUrl || "",
-            }))
-        );
-    }
+        if (data.items.length > 0) {
+            await tx.insert(orderItem).values(
+                data.items.map(item => ({
+                    orderId: newOrder.id,
+                    dishId: item.dishId,
+                    cegrateId: item.cegrateId,
+                    quantity: item.quantity,
+                    pricing: item.pricing,
+                    options: item.options || [],
+                    dishName: item.name || "",
+                    dishImageUrl: item.imageUrl || "",
+                }))
+            );
+        }
+
+        let location = "Takeaway";
+        if (data.tableId) {
+            const [record] = await tx.select({ name: table.name }).from(table).where(eq(table.id, data.tableId));
+            location = `Table ${record?.name ?? data.tableId}`;
+        }
+        const alert = orderAlert(newOrder.id, data.totalPricing, location);
+        await tx.insert(adminNotification).values(alert);
+        return alert;
+    });
+    after(() => sendOrderPush(alert));
 
     revalidatePath("/admin/orders");
     revalidatePath("/admin/tables");

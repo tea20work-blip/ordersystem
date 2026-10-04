@@ -1,5 +1,19 @@
 import { pgTable, serial, varchar, integer, text, timestamp, pgEnum, jsonb, primaryKey, boolean, date } from "drizzle-orm/pg-core";
 
+export const adminNotification = pgTable("admin_notification", {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id").notNull().unique(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    dismissedAt: timestamp("dismissed_at"),
+});
+
+export const adminPushToken = pgTable("admin_push_token", {
+    token: text("token").primaryKey(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const user = pgTable("user", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }),
