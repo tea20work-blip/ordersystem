@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
-import db from "@/db";
-import { dish } from "@/db/schema";
+import { getCachedProducts } from "@/app/actions/home";
 
 export async function GET() {
     try {
-        const products = await db.select({
-            id: dish.id,
-            name: dish.name,
-            price: dish.price
-        }).from(dish).orderBy(dish.createdAt);
+        const products = await getCachedProducts();
 
         return NextResponse.json({
             success: true,

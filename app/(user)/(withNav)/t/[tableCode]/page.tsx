@@ -1,6 +1,5 @@
 import { CartSnak } from "@/components/cartSnak";
 import { ClientMenu } from "@/components/client-menu";
-import CategoryMenuSnack from "@/components/CategoryMenuSnack";
 import { Suspense } from "react";
 import { getCachedMenu, getCachedPosters } from "@/app/actions/home";
 import db from "@/db";
@@ -22,7 +21,6 @@ export default async function Home({ params }: { params: Promise<{ tableCode: st
             <Suspense>
                 <ClientMenu currentTable={currentTable} initialDishes={data} posters={posters} />
             </Suspense>
-            <CategoryMenuSnack data={data} />
             <CartSnak />
         </div>
     );

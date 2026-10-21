@@ -26,6 +26,7 @@ async function getMenu() {
 
             dishId: dish.id,
             dishName: dish.name,
+            dishType: dish.dishType,
             dishPrice: dish.price,
             dishDescription: dish.description,
             dishImageUrl: dish.imageUrl,
@@ -71,6 +72,7 @@ async function getMenu() {
                     acc[row.categoryId].dishes.push({
                         id: row.dishId,
                         name: row.dishName,
+                        dishType: row.dishType,
                         price: row.dishPrice,
                         description: row.dishDescription,
                         imageUrl: row.dishImageUrl,
@@ -110,4 +112,16 @@ async function getMenu() {
 export const getCachedMenu = unstable_cache(getMenu, ["menu-data"], {
     tags: ["menu-data"],
     revalidate: 7200, // 2 hour
+});
+
+export const getCachedProducts = unstable_cache(async () => {
+    return db.select({
+        id: dish.id,
+        name: dish.name,
+        price: dish.price,
+        dishType: dish.dishType,
+    }).from(dish).orderBy(dish.createdAt);
+}, ["products-data"], {
+    tags: ["menu-data"],
+    revalidate: 7200,
 });

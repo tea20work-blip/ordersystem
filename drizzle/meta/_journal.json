@@ -169,6 +169,20 @@
       "when": 1791016434600,
       "tag": "0023_admin_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791618081846,
+      "tag": "0024_razorpay_checkout",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792558417439,
+      "tag": "0025_slow_justice",
+      "breakpoints": true
     }
   ]
 }

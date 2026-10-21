@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { dish } from '@/db/schema';
+import type { dish } from '@/db/schema';
 
 export type Dish = typeof dish.$inferSelect;
 
@@ -12,16 +12,25 @@ export interface SelectedOption {
 
 export interface CartItem {
     cartItemId: string;
-    dish: Dish;
+    dish: Pick<Dish, 'id' | 'name' | 'price'> & Partial<Dish>;
     quantity: number;
     selectedOptions?: SelectedOption[];
+}
+
+export interface CheckoutAttempt {
+    token: string;
+    fingerprint: string;
+    items: { cartItemId: string; quantity: number }[];
+    orderId?: number;
+    amount?: number;
+    paymentStatus: 'pending' | 'paid';
 }
 
 interface CartState {
     items: CartItem[];
     tableCode?: string;
     orderType: string;
-    addItem: (dish: any, selectedOptions?: SelectedOption[]) => void;
+    addItem: (dish: Omit<CartItem['dish'], 'id'> & { id: number | string }, selectedOptions?: SelectedOption[]) => void;
     removeItem: (cartItemId: string) => void;
     updateQuantity: (cartItemId: string, quantity: number) => void;
     clearCart: () => void;
@@ -29,6 +38,9 @@ interface CartState {
     getTotalPrice: () => number;
     setTableCode: (code?: string) => void;
     setOrderType: (type: string) => void;
+    checkouts: CheckoutAttempt[];
+    saveCheckout: (checkout: CheckoutAttempt) => void;
+    completeCheckout: (token: string, orderId: number, amount: number) => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -36,10 +48,26 @@ export const useCartStore = create<CartState>()(
         (set, get) => ({
             items: [],
             orderType: 'dineout',
+            checkouts: [],
+            saveCheckout: (checkout) => set(state => ({
+                checkouts: [...state.checkouts.filter(item => item.token !== checkout.token), checkout],
+            })),
+            completeCheckout: (token, orderId, amount) => set(state => {
+                const checkout = state.checkouts.find(item => item.token === token);
+                if (!checkout || checkout.paymentStatus === 'paid') return state;
+                const purchased = new Map(checkout.items.map(item => [item.cartItemId, item.quantity]));
+                return {
+                    items: state.items.map(item => ({
+                        ...item, quantity: Math.max(0, item.quantity - (purchased.get(item.cartItemId) ?? 0)),
+                    })).filter(item => item.quantity > 0),
+                    checkouts: state.checkouts.map(item => item.token === token ? { ...item, orderId, amount, paymentStatus: 'paid' } : item),
+                };
+            }),
             setTableCode: (code) => set({ tableCode: code }),
-            setOrderType: (type) => set({ orderType: type }),
+            setOrderType: (type) => set({ orderType: type, ...(type === 'dineout' ? { tableCode: undefined } : {}) }),
 
-            addItem: (dish, selectedOptions = []) => {
+            addItem: (inputDish, selectedOptions = []) => {
+                const dish = { ...inputDish, id: Number(inputDish.id) };
                 const currentItems = get().items;
                 const sortedOptionIds = [...selectedOptions].map(o => o.id).sort().join(',');
                 const cartItemId = `${dish.id}${sortedOptionIds ? '-' + sortedOptionIds : ''}`;
@@ -92,7 +120,7 @@ export const useCartStore = create<CartState>()(
         }),
         {
             name: 't20-cart-storage',
-            partialize: (state) => ({ items: state.items }),
+            partialize: (state) => ({ items: state.items, checkouts: state.checkouts, tableCode: state.tableCode, orderType: state.orderType }),
         }
     )
 );

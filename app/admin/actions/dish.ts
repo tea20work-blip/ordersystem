@@ -4,6 +4,7 @@ import db from "@/db";
 import { dish, dishCategory, addons } from "@/db/schema";
 import { eq, inArray, ilike, and, asc } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { isDishType, type DishType } from "@/lib/dish-types";
 
 export async function getDishes(searchQuery?: string) {
     if (searchQuery && searchQuery.trim() !== "") {
@@ -35,9 +36,12 @@ export async function getDish(id: number) {
     };
 }
 
-export async function createDish(data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], styleOptions?: any[], dishVarients?: any[], maxSelectOptions?: number, maxSelectVarient?: number, minSelectVarient?: number, maxStyleOptions?: number, minStyleOptions?: number, isOutOfStock?: boolean, isHidden?: boolean }) {
+export async function createDish(data: { name: string; dishType?: DishType; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], styleOptions?: any[], dishVarients?: any[], maxSelectOptions?: number, maxSelectVarient?: number, minSelectVarient?: number, maxStyleOptions?: number, minStyleOptions?: number, isOutOfStock?: boolean, isHidden?: boolean }) {
+    const selectedType = data.dishType ?? "food";
+    if (!isDishType(selectedType)) throw new Error("Invalid dish type");
     const [newDish] = await db.insert(dish).values({
         name: data.name,
+        dishType: selectedType,
         price: data.price,
         description: data.description,
         imageUrl: data.imageUrl,
@@ -72,11 +76,14 @@ export async function createDish(data: { name: string; price: number; descriptio
     }
 
     revalidatePath("/admin/dishes");
+    revalidateTag("menu-data", "max");
 }
 
-export async function updateDish(id: number, data: { name: string; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], styleOptions?: any[], dishVarients?: any[], maxSelectOptions?: number, maxSelectVarient?: number, minSelectVarient?: number, maxStyleOptions?: number, minStyleOptions?: number, isOutOfStock?: boolean, isHidden?: boolean }) {
+export async function updateDish(id: number, data: { name: string; dishType?: DishType; price: number; description: string; imageUrl: string; categoryIds: number[], addonIds?: number[], dishOptions?: any[], styleOptions?: any[], dishVarients?: any[], maxSelectOptions?: number, maxSelectVarient?: number, minSelectVarient?: number, maxStyleOptions?: number, minStyleOptions?: number, isOutOfStock?: boolean, isHidden?: boolean }) {
+    if (data.dishType !== undefined && !isDishType(data.dishType)) throw new Error("Invalid dish type");
     await db.update(dish).set({
         name: data.name,
+        ...(data.dishType !== undefined ? { dishType: data.dishType } : {}),
         price: data.price,
         description: data.description,
         imageUrl: data.imageUrl,

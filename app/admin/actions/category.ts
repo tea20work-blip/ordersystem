@@ -20,6 +20,7 @@ export async function createCategory(data: { name: string, priority: number }) {
         priority: data.priority,
     });
     revalidatePath("/admin/categories");
+    revalidateTag("menu-data", "max");
 }
 
 export async function updateCategory(id: number, data: { name: string, priority: number }) {
@@ -29,11 +30,13 @@ export async function updateCategory(id: number, data: { name: string, priority:
         updatedAt: new Date(),
     }).where(eq(category.id, id));
     revalidatePath("/admin/categories");
+    revalidateTag("menu-data", "max");
 }
 
 export async function deleteCategory(id: number) {
     await db.delete(category).where(eq(category.id, id));
     revalidatePath("/admin/categories");
+    revalidateTag("menu-data", "max");
 }
 
 export async function updateCategoryPriorities(updates: { id: number, priority: number }[]) {

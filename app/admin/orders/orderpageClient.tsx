@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type {
+  getOrders,
   AdminOrderType,
   OrderDeliveryStatus,
   OrderPaymentStatus,
@@ -39,18 +40,7 @@ import type {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-type AdminOrderRow = {
-  id: number;
-  totalPricing: number;
-  status: OrderPaymentStatus | null;
-  deliveryStatus: OrderDeliveryStatus | null;
-  orderType: AdminOrderType | null;
-  createdAt: string | Date | null;
-  tableName: string | null;
-  userName: string | null;
-  userNumber: string | null;
-  message: string | null;
-};
+type AdminOrderRow = Omit<Awaited<ReturnType<typeof getOrders>>['orders'][number], 'createdAt'> & { createdAt: string | Date | null };
 
 type OrdersResponse = {
   orders: AdminOrderRow[];
@@ -354,6 +344,7 @@ export default function OrdersPage() {
                   <TableCell>
                     <PaymentStatusSelect
                       orderId={order.id}
+                      gatewayStatus={order.paymentStatus}
                       initialStatus={
                         (order.status || "pending") as OrderPaymentStatus
                       }

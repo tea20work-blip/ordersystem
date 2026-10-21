@@ -10,7 +10,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { getImageUrl } from "@/lib/s3";
 import { DishOptionsInput, DishOption } from "./DishOptionsInput";
 import { DishVarientsInput, DishVarient } from "./DishVarientsInput";
-import { revalidateTag } from "next/cache";
+import { DISH_TYPES, DISH_TYPE_LABELS, isDishType } from "@/lib/dish-types";
 
 export default async function DishFormPage({
     searchParams,
@@ -32,6 +32,8 @@ export default async function DishFormPage({
         const { uploadToS3 } = await import("@/lib/s3");
 
         const name = formData.get("name") as string;
+        const dishType = formData.get("dishType") ?? "food";
+        if (!isDishType(dishType)) throw new Error("Invalid dish type");
         const price = parseInt(formData.get("price") as string, 10);
         const description = formData.get("description") as string;
 
@@ -92,11 +94,10 @@ export default async function DishFormPage({
         const maxStyleOptions = parseInt(formData.get("maxStyleOptions") as string || "1", 10);
 
         if (isEdit && dishId) {
-            await updateDish(dishId, { name, price, description, imageUrl, categoryIds, addonIds, dishOptions, styleOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, minStyleOptions, maxStyleOptions, isOutOfStock, isHidden });
+            await updateDish(dishId, { name, dishType, price, description, imageUrl, categoryIds, addonIds, dishOptions, styleOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, minStyleOptions, maxStyleOptions, isOutOfStock, isHidden });
         } else {
-            await createDish({ name, price, description, imageUrl, categoryIds, addonIds, dishOptions, styleOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, minStyleOptions, maxStyleOptions, isOutOfStock, isHidden });
+            await createDish({ name, dishType, price, description, imageUrl, categoryIds, addonIds, dishOptions, styleOptions, dishVarients, maxSelectOptions, maxSelectVarient, minSelectVarient, minStyleOptions, maxStyleOptions, isOutOfStock, isHidden });
         }
-        revalidateTag("menu-data", "max");
 
         redirect("/admin/dishes");
     }
@@ -126,6 +127,21 @@ export default async function DishFormPage({
                                 required
                                 placeholder="e.g. Margherita Pizza"
                             />
+                        </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="dishType">Dish Type</Label>
+                            <select
+                                id="dishType"
+                                name="dishType"
+                                defaultValue={dishData?.dishType ?? "food"}
+                                required
+                                className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                                {DISH_TYPES.map(type => (
+                                    <option key={type} value={type}>{DISH_TYPE_LABELS[type]}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="space-y-2">

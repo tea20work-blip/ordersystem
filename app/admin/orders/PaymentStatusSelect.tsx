@@ -16,10 +16,12 @@ export function PaymentStatusSelect({
     orderId,
     initialStatus,
     onUpdated,
+    gatewayStatus,
 }: {
     orderId: number;
     initialStatus: OrderPaymentStatus;
     onUpdated?: () => void;
+    gatewayStatus?: 'pending' | 'paid' | null;
 }) {
     const [status, setStatus] = useState<OrderPaymentStatus>(initialStatus || "pending");
     const [loading, setLoading] = useState(false);
@@ -45,6 +47,8 @@ export function PaymentStatusSelect({
     } else if (status === "cancelled") {
         colorClass = "bg-red-100 text-red-800 border-red-200";
     }
+
+    if (gatewayStatus) return <span className={`px-2 py-1 rounded-full text-xs font-medium ${gatewayStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{gatewayStatus === 'paid' ? 'Paid Online' : 'Payment Pending'}</span>;
 
     return (
         <select

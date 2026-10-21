@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/db";
-import { user, order, orderItem, dish, table } from "@/db/schema";
+import { user, order, table } from "@/db/schema";
 import { asc, desc, eq, or } from "drizzle-orm";
 
 export async function getUsers() {
@@ -22,6 +22,7 @@ export async function getUserOrders(userId: number) {
     const orders = await db.select({
         id: order.id,
         status: order.status,
+        paymentStatus: order.paymentStatus,
         totalPricing: order.totalPricing,
         createdAt: order.createdAt,
         tableName: table.name,

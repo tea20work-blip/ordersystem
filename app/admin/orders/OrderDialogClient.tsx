@@ -8,7 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { getOrderDetails, updateOrderAdvanced, updateOrderItemsList } from "../actions/order";
+import { getOrderDetails, updateOrderAdvanced, updateOrderItemsList, type getOrders, type OrderPaymentStatus } from "../actions/order";
 import { getUsers, createUser } from "../actions/user";
 import { getTables } from "../actions/table";
 import { getDishes } from "../actions/dish";
@@ -18,20 +18,25 @@ import { getImageUrl } from "@/lib/s3";
 import { z } from "zod";
 import { userDetailsSchema } from "@/zod/userDetailsSchema";
 import Image from "next/image";
+import { toast } from "sonner";
 
-export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: () => void }) {
+type OrderRow = Awaited<ReturnType<typeof getOrders>>['orders'][number];
+type DialogOrder = Pick<OrderRow, 'id' | 'totalPricing' | 'status'> & Partial<Omit<OrderRow, 'id' | 'totalPricing' | 'status' | 'createdAt'>> & { createdAt: string | Date | null };
+type EditableItem = Parameters<typeof updateOrderItemsList>[1][number];
+
+export function OrderDialogClient({ order, onUpdate }: { order: DialogOrder, onUpdate?: () => void }) {
     const [open, setOpen] = useState(false);
-    const [items, setItems] = useState<any[]>([]);
+    const [items, setItems] = useState<EditableItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
 
-    const [status, setStatus] = useState<string>(order.status);
-    const [isRunning, setIsRunning] = useState<boolean>(order.isRunning);
+    const [status, setStatus] = useState<OrderPaymentStatus>(order.status || "pending");
+    const [isRunning, setIsRunning] = useState<boolean>(order.isRunning ?? true);
     const [lendingUserId, setLendingUserId] = useState<string>(order.lendingUserId ? order.lendingUserId.toString() : "");
     const [paidOnline, setPaidOnline] = useState<number>(order.paidOnline || 0);
     const [paidCash, setPaidCash] = useState<number>(order.paidCash || 0);
-    const [users, setUsers] = useState<any[]>([]);
-    const [tables, setTables] = useState<any[]>([]);
+    const [users, setUsers] = useState<Awaited<ReturnType<typeof getUsers>>>([]);
+    const [tables, setTables] = useState<Awaited<ReturnType<typeof getTables>>>([]);
     const [selectedTableId, setSelectedTableId] = useState<string>(order.tableId ? order.tableId.toString() : "");
 
     const [isCreatingUser, setIsCreatingUser] = useState(false);
@@ -40,14 +45,15 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
     const [createUserErrors, setCreateUserErrors] = useState<{ name?: string, mobile?: string }>({});
 
     const [isAddingItem, setIsAddingItem] = useState(false);
-    const [dishes, setDishes] = useState<any[]>([]);
-    const [cegrates, setCegrates] = useState<any[]>([]);
+    const [dishes, setDishes] = useState<Awaited<ReturnType<typeof getDishes>>>([]);
+    const [cegrates, setCegrates] = useState<Awaited<ReturnType<typeof getCegrates>>>([]);
     const [searchQuery, setSearchQuery] = useState("");
 
     const calculatedTotalPricing = items.reduce((acc, item) => acc + (item.pricing * item.quantity), 0);
     const calculatedLendingAmount = Math.max(0, calculatedTotalPricing - (paidOnline || 0) - (paidCash || 0));
 
-    const isAlreadyPaid = ['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(order.status);
+    const isGatewayOrder = !!order.paymentStatus;
+    const isAlreadyPaid = isGatewayOrder || ['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(order.status || 'pending');
     const handleCreateUser = async () => {
         setCreateUserErrors({});
         const schemaToUse = z.object({
@@ -87,10 +93,10 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
     const handleSave = async () => {
         setIsUpdating(true);
         try {
-            await updateOrderItemsList(order.id, items);
+            if (!isGatewayOrder) await updateOrderItemsList(order.id, items);
 
             await updateOrderAdvanced(order.id, {
-                status: status as any,
+                status,
                 isRunning,
                 lendingUserId: lendingUserId ? parseInt(lendingUserId) : null,
                 totalPricing: calculatedTotalPricing,
@@ -103,6 +109,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
             if (onUpdate) onUpdate();
         } catch (err) {
             console.error(err);
+            toast.error(err instanceof Error ? err.message : 'Unable to update order');
         } finally {
             setIsUpdating(false);
         }
@@ -111,8 +118,8 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
     const handleOpen = async () => {
         setOpen(true);
         // Reset state back to initial order prop values in case of discarded changes
-        setStatus(order.status);
-        setIsRunning(order.isRunning);
+        setStatus(order.status || "pending");
+        setIsRunning(order.isRunning ?? true);
         setLendingUserId(order.lendingUserId ? order.lendingUserId.toString() : "");
         setPaidOnline(order.paidOnline || 0);
         setPaidCash(order.paidCash || 0);
@@ -123,7 +130,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
         setLoading(true);
         try {
             const details = await getOrderDetails(order.id);
-            setItems(details);
+            setItems(details.map(item => ({ ...item, dishId: item.dishId ?? undefined, cegrateId: item.cegrateId ?? undefined, imageUrl: item.imageUrl ?? undefined, options: (item.options ?? []).filter((option): option is Record<string, unknown> => !!option && typeof option === 'object' && !Array.isArray(option)) })));
         } catch (err) {
             console.error(err);
         } finally {
@@ -183,7 +190,11 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                         <div className="flex flex-col gap-3 col-span-2 border p-3 rounded bg-muted/30">
                             {isAlreadyPaid ? (
                                 <div className="text-sm text-green-600 font-medium py-2">
-                                    This order has been marked as paid ({order.status}) and cannot be modified further.
+                                    {isGatewayOrder ? `Razorpay payment: ${order.paymentStatus}. Items and payment totals are managed automatically.` : `This order has been marked as paid (${order.status}) and cannot be modified further.`}
+                                    {isGatewayOrder && <div className="flex items-center gap-3 mt-3 text-foreground">
+                                        <label className="flex items-center gap-2"><input type="checkbox" checked={isRunning} onChange={event => setIsRunning(event.target.checked)} />Order is active</label>
+                                        <Button size="sm" onClick={handleSave} disabled={isUpdating}>{isUpdating ? 'Saving...' : 'Save fulfillment settings'}</Button>
+                                    </div>}
                                 </div>
                             ) : (
                                 <>
@@ -192,7 +203,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                         <select
                                             value={status}
                                             onChange={(e) => {
-                                                setStatus(e.target.value);
+                                                setStatus(e.target.value as OrderPaymentStatus);
                                                 if (['paid_online', 'paid_cash', 'paid_user', 'completed'].includes(e.target.value)) {
                                                     setIsRunning(false);
                                                 }
@@ -334,7 +345,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                             )}
                         </div>
                         <div>
-                            <span className="font-semibold text-muted-foreground">Date:</span> {new Date(order.createdAt).toLocaleString()}
+                            <span className="font-semibold text-muted-foreground">Date:</span> {new Date(order.createdAt || Date.now()).toLocaleString()}
                         </div>
                     </div>
 
@@ -368,7 +379,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                                     <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-[10px]">No Img</div>
                                                 )}
                                             </td>
-                                            <td className="p-3 font-medium">{item.dishName} {item?.options?.map((option: any) => `(${option.name})`).join(", ")}</td>
+                                            <td className="p-3 font-medium">{item.dishName} {item?.options?.map((option) => `(${option.name})`).join(", ")}</td>
                                             <td className="p-3">₹ {item.pricing}</td>
                                             <td className="p-3">
                                                 {isAlreadyPaid ? (
@@ -447,7 +458,7 @@ export function OrderDialogClient({ order, onUpdate }: { order: any, onUpdate?: 
                                                         if (exists) {
                                                             return prev.map(i => i.id === exists.id ? { ...i, quantity: i.quantity + 1 } : i);
                                                         }
-                                                        return [...prev, { id: Math.random(), dishId: dish.id, dishName: dish.name, pricing: dish.price, quantity: 1, imageUrl: dish.imageUrl, options: [] }];
+                                                        return [...prev, { id: Math.random(), dishId: dish.id, dishName: dish.name, pricing: dish.price, quantity: 1, imageUrl: dish.imageUrl ?? undefined, options: [] }];
                                                     });
                                                 }}>Add</Button>
                                             </div>

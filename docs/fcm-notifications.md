@@ -1,6 +1,6 @@
 # Admin order notifications
 
-Notifications are created after a customer checkout or admin-created order succeeds. Orders, items, and the alert are committed in one database transaction. Lending repayments do not trigger order alerts.
+Customer checkout orders are saved with payment pending. Their notification is created only when a captured Razorpay payment is confirmed by browser verification or a signed webhook; the payment update and alert commit in one transaction. Counter-created orders still create their order, items, and alert in one transaction. Lending repayments do not trigger order alerts. See [Razorpay checkout setup](razorpay-checkout.md).
 
 The shared admin layout shows every undismissed alert on every admin page except login. Alerts have no expiry and survive page changes and reloads. Clicking × dismisses that alert for all admins. The panel checks the database every five seconds and on focus; foreground FCM messages trigger an immediate check. A notification beeps once when first detected in the open panel after sound is enabled. Existing alerts on initial page load do not beep.
 

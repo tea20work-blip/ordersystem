@@ -15,21 +15,26 @@ import {
   fetchOrdersByOrderIdAction,
 } from "./actions";
 import { Loader2 } from "lucide-react";
-import { Header } from "@/components/header";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+
+type CustomerOrder = NonNullable<Awaited<ReturnType<typeof fetchOrdersByOrderIdAction>>["data"]>[number];
+
+function optionName(option: unknown) {
+  return option && typeof option === "object" && "name" in option && typeof option.name === "string" ? option.name : "";
+}
 
 export function OrdersPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  var orderId = searchParams.get("orderId");
+  const [searchedMobile, setSearchedMobile] = useState("");
+  const [searchVersion, setSearchVersion] = useState(0);
+  const orderId = searchedMobile ? null : searchParams.get("orderId");
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
 
-  const downloadBill = async (order: any) => {
+  const downloadBill = async (order: CustomerOrder) => {
     const { jsPDF } = await import("jspdf");
 
     const loadImageAsDataUrl = async (url: string) => {
@@ -101,11 +106,11 @@ export function OrdersPage() {
 
     let y = 69;
 
-    order.items?.forEach((item: any) => {
+    order.items?.forEach((item) => {
       let itemName = item.dishName;
 
       if (item.options && item.options.length > 0) {
-        itemName += ` (${item.options.map((o: any) => o.name).join(", ")})`;
+        itemName += ` (${item.options.map(optionName).join(", ")})`;
       }
 
       const splitTitle = doc.splitTextToSize(itemName, 45);
@@ -173,46 +178,48 @@ export function OrdersPage() {
     doc.save(`bill-${order.id}.pdf`);
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    orderId = null;
-    e.preventDefault();
-    if (!mobile) return;
-    setLoading(true);
-    setError("");
-
-    const res = orderId
-      ? await fetchOrdersByOrderIdAction(Number(orderId))
-      : await fetchOrdersByMobileAction(mobile);
-    if (res?.success) {
-      setOrders(res.data || []);
-      setSearched(true);
-    } else {
-      setError(res?.message || "Something went wrong.");
-      setOrders([]);
-      setSearched(true);
-    }
-    setLoading(false);
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!mobile.trim()) return;
+    setSearchedMobile(mobile.trim());
+    setSearchVersion(version => version + 1);
   };
 
+  const hasPendingPayment = orders.some(order => order.paymentStatus === 'pending');
   useEffect(() => {
-    async function getOrders() {
-      if (orderId) {
-        setLoading(true);
-        setError("");
-        const res = await fetchOrdersByOrderIdAction(Number(orderId));
-        if (res?.success) {
-          setOrders(res.data || []);
-          setSearched(true);
-        } else {
-          setError(res?.message || "Something went wrong.");
+    if (!orderId && !searchedMobile) return;
+    let active = true;
+    let fetching = false;
+    const refresh = async (initial = false) => {
+      if (fetching) return;
+      fetching = true;
+      if (initial) setLoading(true);
+      try {
+        const result = orderId
+          ? await fetchOrdersByOrderIdAction(Number(orderId))
+          : await fetchOrdersByMobileAction(searchedMobile);
+        if (!active) return;
+        if (result.success) {
+          setOrders(result.data || []);
+          setError('');
+        } else if (initial) {
           setOrders([]);
-          setSearched(true);
+          setError(result.message || 'Unable to load orders.');
         }
-        setLoading(false);
+        setSearched(true);
+      } catch {
+        if (active && initial) setError('Unable to load orders. Please try again.');
+      } finally {
+        fetching = false;
+        if (active) setLoading(false);
       }
-    }
-    getOrders();
-  }, [orderId]);
+    };
+    void refresh(true);
+    const onFocus = () => { void refresh(); };
+    const timer = hasPendingPayment ? window.setInterval(onFocus, 5000) : undefined;
+    window.addEventListener('focus', onFocus);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', onFocus); };
+  }, [orderId, searchedMobile, searchVersion, hasPendingPayment]);
 
   return (
     <div className=" px-4 pb-12">
@@ -271,32 +278,19 @@ export function OrdersPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {order.paymentStatus && <p aria-live="polite" className={order.paymentStatus === 'paid' ? 'text-green-600 font-medium' : 'text-amber-600 font-medium'}>
+                  {order.paymentStatus === 'paid' ? 'Payment successful' : 'Payment pending'}
+                </p>}
                 <div>
                   <h4 className="text-sm font-semibold mb-2">Items</h4>
                   {order.items && order.items.length > 0 ? (
                     <ul className="space-y-2">
-                      {order.items.map(
-                        (item: {
-                          id: number;
-                          quantity: number;
-                          dishName: string;
-                          pricing: number;
-                          options: { name: string; price: number }[];
-                        }) => (
-                          <li
-                            key={item.id}
-                            className="flex justify-between text-sm"
-                          >
-                            <span>
-                              {item.quantity}x {item.dishName}{" "}
-                              {item?.options
-                                ?.map((option: any) => `(${option.name})`)
-                                .join(", ")}{" "}
-                            </span>
-                            <span>₹{item.pricing}</span>
-                          </li>
-                        ),
-                      )}
+                      {order.items.map(item => (
+                        <li key={item.id} className="flex justify-between text-sm">
+                          <span>{item.quantity}x {item.dishName}{" "}{item.options?.map(option => `(${optionName(option)})`).join(', ')}</span>
+                          <span>₹{item.pricing}</span>
+                        </li>
+                      ))}
                     </ul>
                   ) : (
                     <p className="text-sm text-gray-500">No items found.</p>

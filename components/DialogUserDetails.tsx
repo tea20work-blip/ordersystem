@@ -23,6 +23,8 @@ type Props = {
     onOpenChange: (open: boolean) => void;
     data?: Partial<UserDetailsFormData>;
     onSubmit: (data: UserDetailsFormData) => Promise<void> | void;
+    disabled?: boolean;
+    submitLabel?: string;
 };
 
 export function DialogUserDetails({
@@ -30,6 +32,8 @@ export function DialogUserDetails({
     onOpenChange,
     data,
     onSubmit,
+    disabled = false,
+    submitLabel = "Submit",
 }: Props) {
     const {
         register,
@@ -93,8 +97,8 @@ export function DialogUserDetails({
                     </div>
 
                     <DialogFooter>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "Submitting..." : "Submit"}
+                        <Button type="submit" disabled={isSubmitting || disabled}>
+                            {isSubmitting || disabled ? "Submitting..." : submitLabel}
                         </Button>
                     </DialogFooter>
                 </form>

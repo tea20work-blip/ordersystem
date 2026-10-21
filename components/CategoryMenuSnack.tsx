@@ -14,7 +14,7 @@ const CategoryMenuSnack = ({ data }: any) => {
                     <div className="max-h-96 overflow-auto flex flex-col w-full no-scrollbar divide-y pt-2 text-sm">
                         {
                             data.map((category: any) => (
-                                <Link href={`#${category.id}`} onClick={() => setIsDrawerOpen(false)} className=' flex gap-4 justify-between py-2 '>
+                                <Link key={category.id} href={`#${category.id}`} onClick={() => setIsDrawerOpen(false)} className=' flex gap-4 justify-between py-2 '>
                                     <h1 className='font-medium'>
                                         {category.name}
                                     </h1>

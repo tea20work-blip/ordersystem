@@ -36,10 +36,12 @@ import { getImageUrl } from "@/lib/s3";
 import { updateDishPriorities } from "../actions/dish";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import { DISH_TYPE_LABELS, type DishType } from "@/lib/dish-types";
 
 type Dish = {
   id: number;
   name: string;
+  dishType: DishType;
   price: number;
   description: string | null;
   priority: number;
@@ -117,6 +119,7 @@ function SortableTableRow({ dish }: SortableTableRowProps) {
         )}
       </TableCell>
       <TableCell>{dish.name}</TableCell>
+      <TableCell>{DISH_TYPE_LABELS[dish.dishType]}</TableCell>
       <TableCell>₹ {dish.price}</TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
@@ -206,6 +209,7 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
               <TableHead>Priority</TableHead>
               <TableHead>Image</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Dish Type</TableHead>
               <TableHead>Price</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -213,7 +217,7 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
           <TableBody>
             <TableRow>
               <TableCell
-                colSpan={6}
+                colSpan={7}
                 className="text-center py-6 text-muted-foreground"
               >
                 No dishes found.
@@ -244,6 +248,7 @@ export function DishesTableClient({ initialDishes }: DishesTableClientProps) {
               <TableHead>Priority</TableHead>
               <TableHead>Image</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Dish Type</TableHead>
               <TableHead>Price</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>

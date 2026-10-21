@@ -50,6 +50,7 @@ export async function getOrders(page: number = 1, limit: number = 10, filters: O
             paidCash: order.paidCash,
             lendingAmount: order.lendingAmount,
             status: order.status,
+            paymentStatus: order.paymentStatus,
             deliveryStatus: order.deliveryStatus,
             orderType: order.orderType,
             createdAt: order.createdAt,
@@ -104,6 +105,7 @@ export async function updateOrderStatus(orderId: number, status: OrderPaymentSta
             paidOnline: order.paidOnline,
             paidCash: order.paidCash,
             lendingAmount: order.lendingAmount,
+            paymentStatus: order.paymentStatus,
         })
         .from(order)
         .where(eq(order.id, orderId))
@@ -111,6 +113,9 @@ export async function updateOrderStatus(orderId: number, status: OrderPaymentSta
 
     if (!currentOrder) {
         throw new Error("Order not found");
+    }
+    if (currentOrder.paymentStatus) {
+        throw new Error("Razorpay payment status is managed automatically. Use fulfillment controls instead.");
     }
 
     await db.update(order)
@@ -145,6 +150,25 @@ export async function updateOrderAdvanced(orderId: number, data: {
     lendingAmount?: number,
     tableId?: number | null
 }) {
+    const [current] = await db.select().from(order).where(eq(order.id, orderId)).limit(1);
+    if (!current) throw new Error("Order not found");
+    if (current.paymentStatus) {
+        if (data.status !== current.status || data.totalPricing !== current.totalPricing
+            || (data.paidOnline !== undefined && data.paidOnline !== current.paidOnline)
+            || (data.paidCash !== undefined && data.paidCash !== current.paidCash)
+            || (data.lendingAmount !== undefined && data.lendingAmount !== current.lendingAmount)
+            || (data.lendingUserId != null && data.lendingUserId !== current.lendingUserId)) {
+            throw new Error("Razorpay order totals and payment accounting cannot be edited.");
+        }
+        await db.update(order).set({
+            isRunning: data.isRunning,
+            ...(data.tableId !== undefined && { tableId: data.tableId }),
+            updatedAt: new Date(),
+        }).where(eq(order.id, orderId));
+        revalidatePath("/admin/orders");
+        revalidatePath("/admin/tables");
+        return;
+    }
     let finalIsRunning = data.isRunning;
     if (['paid_online', 'paid_cash', 'paid_user', 'cancelled'].includes(data.status)) {
         finalIsRunning = false;
@@ -266,6 +290,10 @@ export async function getRunningOrdersByTable(tableId: number) {
             id: order.id,
             totalPricing: order.totalPricing,
             status: order.status,
+            paymentStatus: order.paymentStatus,
+            paidOnline: order.paidOnline,
+            paidCash: order.paidCash,
+            lendingAmount: order.lendingAmount,
             createdAt: order.createdAt,
             tableId: order.tableId,
             tableName: table.name,
@@ -296,6 +324,9 @@ export async function getRunningOrdersByTable(tableId: number) {
 
 export async function updateOrderItemsList(orderId: number, items: { id?: number, dishId?: number, cegrateId?: number, quantity: number, pricing: number, dishName: string, imageUrl?: string, options?: OrderItemOptions }[]) {
     await db.transaction(async (tx) => {
+        const [current] = await tx.select({ paymentStatus: order.paymentStatus }).from(order).where(eq(order.id, orderId)).for("update");
+        if (!current) throw new Error("Order not found");
+        if (current.paymentStatus) throw new Error("Razorpay order items and totals cannot be edited. Place a new order for additional items.");
         // First delete all existing items
         await tx.delete(orderItem).where(eq(orderItem.orderId, orderId));
 

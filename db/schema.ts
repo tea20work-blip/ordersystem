@@ -1,4 +1,5 @@
 import { pgTable, serial, varchar, integer, text, timestamp, pgEnum, jsonb, primaryKey, boolean, date } from "drizzle-orm/pg-core";
+import { DISH_TYPES } from "../lib/dish-types";
 
 export const adminNotification = pgTable("admin_notification", {
     id: serial("id").primaryKey(),
@@ -53,9 +54,12 @@ export const cigaretteOrders = pgTable("cigarette_orders", {
     createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const dishType = pgEnum("dish_type", DISH_TYPES);
+
 export const dish = pgTable("dish", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
+    dishType: dishType("dish_type").notNull().default("food"),
     price: integer("price").notNull(),
     description: text("description"),
     priority: integer("priority").notNull().default(0),
@@ -105,6 +109,7 @@ export const dishCategory = pgTable("dish_category", {
 
 export const orderDeliveryStatus = pgEnum("order_delivery_status", ["ordered", "ready", "dispatched", "delivered"]);
 export const orderType = pgEnum("order_type", ["dine_in", "take_away", "delivery"]);
+export const gatewayPaymentStatus = pgEnum("gateway_payment_status", ["pending", "paid"]);
 
 export const order = pgTable("order", {
     id: serial("id").primaryKey(),
@@ -126,6 +131,15 @@ export const order = pgTable("order", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     message: varchar("message", { length: 255 }),
+    // Nullable so historical and counter-created orders keep their existing flow.
+    paymentStatus: gatewayPaymentStatus("payment_status"),
+    razorpayOrderId: varchar("razorpay_order_id", { length: 255 }).unique(),
+    razorpayPaymentId: varchar("razorpay_payment_id", { length: 255 }).unique(),
+    razorpaySignature: varchar("razorpay_signature", { length: 64 }),
+    paymentAmount: integer("payment_amount"),
+    paymentCurrency: varchar("payment_currency", { length: 3 }),
+    paymentConfirmedAt: timestamp("payment_confirmed_at"),
+    checkoutTokenHash: varchar("checkout_token_hash", { length: 64 }).unique(),
 });
 
 export const orderItem = pgTable("order_item", {
